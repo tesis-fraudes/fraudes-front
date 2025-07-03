@@ -1,7 +1,12 @@
 import type { NextConfig } from "next";
 
+const isGithubActions = process.env.GITHUB_ACTIONS === "true";
+const repo = "fraudes-front"; // nombre de tu repo
+
 const nextConfig: NextConfig = {
-  /* config options here */
+  output: "export",
+  basePath: isGithubActions ? `/${repo}` : "",
+  assetPrefix: isGithubActions ? `/${repo}/` : "",
 };
 
 export default nextConfig;

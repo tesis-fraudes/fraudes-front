@@ -35,7 +35,7 @@ export default function LoginPage() {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
       })
       setIsLoading(false)
-      router.push("/dashboard")
+      router.push("/model")
     }, 1500)
   }
 

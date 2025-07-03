@@ -13,12 +13,6 @@ import type { UserRole } from "@/lib/types" // Import UserRole from the appropri
 
 const navigationItems = [
   {
-    title: "Dashboard",
-    href: "/dashboard",
-    icon: Home,
-    roles: ["usuario", "analista", "gerente"],
-  },
-  {
     title: "Modelo IA",
     href: "/model",
     icon: Brain,
