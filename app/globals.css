@@ -120,3 +120,116 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Estilos personalizados para el tema azul */
+@layer components {
+  .blue-gradient {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  }
+  
+  .blue-shadow {
+    box-shadow: 0 4px 14px 0 rgba(59, 130, 246, 0.15);
+  }
+  
+  .blue-border-hover {
+    @apply border-gray-200 hover:border-blue-600 transition-colors duration-200;
+  }
+  
+  .blue-bg-hover {
+    @apply hover:bg-blue-50 transition-colors duration-200;
+  }
+  
+  .blue-text-hover {
+    @apply hover:text-blue-600 transition-colors duration-200;
+  }
+  
+  .card-blue-accent {
+    @apply border border-gray-200 hover:border-blue-200 hover:shadow-md transition-all duration-200;
+  }
+  
+  .button-blue-primary {
+    @apply bg-blue-600 hover:bg-blue-700 text-white transition-colors duration-200;
+  }
+  
+  .button-blue-outline {
+    @apply border border-gray-300 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-600 transition-all duration-200;
+  }
+  
+  .sidebar-blue-accent {
+    @apply bg-gradient-to-b from-blue-50 to-white border-r border-gray-200;
+  }
+  
+  .sidebar-header-blue {
+    @apply bg-blue-600/5 border-b border-blue-100;
+  }
+  
+  .sidebar-footer-blue {
+    @apply bg-blue-600/5 border-t border-blue-100;
+  }
+  
+  .nav-item-hover {
+    @apply hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200 hover:shadow-sm;
+  }
+  
+  .nav-item-active {
+    @apply bg-blue-100 border-blue-600 text-blue-700 hover:bg-blue-200 shadow-sm;
+  }
+  
+  .header-blue-accent {
+    @apply bg-white border-b border-gray-200 shadow-sm;
+  }
+  
+  /* Estilos para sidebar colapsado */
+  .sidebar-collapsed .sidebar-content {
+    @apply overflow-hidden;
+  }
+  
+  .sidebar-collapsed .sidebar-text {
+    @apply opacity-0 max-w-0;
+  }
+  
+  .sidebar-expanded .sidebar-text {
+    @apply opacity-100 max-w-full;
+  }
+  
+  .menu-item-glow {
+    @apply relative overflow-hidden;
+  }
+  
+  .menu-item-glow::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-blue-600/10 to-transparent opacity-0 transition-opacity duration-200;
+  }
+  
+  .menu-item-glow:hover::before {
+    @apply opacity-100;
+  }
+  
+  /* Estilos para modales con scroll */
+  .modal-scroll-container {
+    @apply flex flex-col min-h-0;
+  }
+  
+  .modal-scroll-content {
+    @apply overflow-y-auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgb(203 213 225) transparent;
+  }
+  
+  .modal-scroll-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .modal-scroll-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .modal-scroll-content::-webkit-scrollbar-thumb {
+    background-color: rgb(203 213 225);
+    border-radius: 3px;
+  }
+  
+  .modal-scroll-content::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(148 163 184);
+  }
+}

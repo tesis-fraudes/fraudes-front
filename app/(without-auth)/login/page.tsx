@@ -11,11 +11,12 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Shield, Eye, EyeOff } from "lucide-react"
 import { useAuthStore } from "@/lib/auth-store"
+import { ROUTES, USER_ROLES, type UserRole } from "@/lib/constants"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
-  const [role, setRole] = useState<"usuario" | "analista" | "gerente">("usuario")
+  const [role, setRole] = useState<UserRole>(USER_ROLES.ANALISTA)
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
@@ -35,7 +36,7 @@ export default function LoginPage() {
         avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${email}`,
       })
       setIsLoading(false)
-      router.push("/model")
+      router.push(ROUTES.MODEL)
     }, 1500)
   }
 
@@ -92,14 +93,13 @@ export default function LoginPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="role">Rol de Usuario</Label>
-                <Select value={role} onValueChange={(value: "usuario" | "analista" | "gerente") => setRole(value)}>
+                <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
                   <SelectTrigger className="h-11">
                     <SelectValue placeholder="Selecciona tu rol" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="usuario">👤 Usuario del Sistema</SelectItem>
-                    <SelectItem value="analista">🔍 Analista de Fraude</SelectItem>
-                    <SelectItem value="gerente">👔 Gerente/Supervisor</SelectItem>
+                    <SelectItem value={USER_ROLES.ANALISTA}>🔍 Analista de Fraude</SelectItem>
+                    <SelectItem value={USER_ROLES.GERENTE}>👔 Gerente/Supervisor</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

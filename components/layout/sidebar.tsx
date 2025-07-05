@@ -7,44 +7,44 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Shield, Home, Brain, AlertTriangle, BarChart3, Settings, LogOut, Users, Activity } from "lucide-react"
+import { Shield, Brain, AlertTriangle, BarChart3, Settings, LogOut, Users, Activity } from "lucide-react"
 import { useAuthStore } from "@/lib/auth-store"
-import type { UserRole } from "@/lib/types" // Import UserRole from the appropriate file
+import { ROUTES, USER_ROLES, UserRole } from "@/lib/constants"
 
 const navigationItems = [
   {
     title: "Modelo IA",
-    href: "/model",
+    href: ROUTES.MODEL,
     icon: Brain,
-    roles: ["analista", "gerente"],
+    roles: [USER_ROLES.ANALISTA, USER_ROLES.GERENTE],
     description: "PK1 - Evaluación Automática",
   },
   {
     title: "Revisión Manual",
-    href: "/transactions",
+    href: ROUTES.TRANSACTIONS,
     icon: AlertTriangle,
-    roles: ["analista", "gerente"],
+    roles: [USER_ROLES.ANALISTA, USER_ROLES.GERENTE],
     description: "PK2 - Transacciones Sospechosas",
   },
   {
     title: "Reportes",
-    href: "/reports",
+    href: ROUTES.REPORTS,
     icon: BarChart3,
-    roles: ["gerente"],
+    roles: [USER_ROLES.GERENTE],
     description: "PK3 - Análisis Gerencial",
   },
   {
     title: "Usuarios",
     href: "/users",
     icon: Users,
-    roles: ["gerente"],
+    roles: [USER_ROLES.GERENTE],
     description: "Gestión de Usuarios",
   },
   {
     title: "Actividad",
     href: "/activity",
     icon: Activity,
-    roles: ["analista", "gerente"],
+    roles: [USER_ROLES.ANALISTA, USER_ROLES.GERENTE],
     description: "Registro de Acciones",
   },
 ]
@@ -59,12 +59,11 @@ export function Sidebar() {
 
   const handleLogout = () => {
     logout()
-    window.location.href = "/login"
+    window.location.href = ROUTES.LOGIN
   }
 
   const getRoleBadge = (role: UserRole) => {
     const config = {
-      usuario: { label: "Usuario", variant: "default" as const },
       analista: { label: "Analista", variant: "secondary" as const },
       gerente: { label: "Gerente", variant: "destructive" as const },
     }
@@ -81,7 +80,6 @@ export function Sidebar() {
           </div>
           <div>
             <h1 className="text-lg font-bold text-gray-900">FraudGuard</h1>
-            <p className="text-xs text-gray-500">Sistema de Detección</p>
           </div>
         </div>
       </div>
@@ -122,11 +120,11 @@ export function Sidebar() {
 
         <Separator className="my-4" />
 
-        <Link href="/settings">
+        <Link href={ROUTES.SETTINGS}>
           <div
             className={cn(
               "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
-              pathname === "/settings"
+              pathname === ROUTES.SETTINGS
                 ? "bg-blue-50 text-blue-700 border border-blue-200"
                 : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
             )}

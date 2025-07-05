@@ -1,7 +1,6 @@
 import { create } from "zustand"
 import { persist } from "zustand/middleware"
-
-export type UserRole = "usuario" | "analista" | "gerente"
+import { UserRole } from "./constants"
 
 export interface User {
   id: string
