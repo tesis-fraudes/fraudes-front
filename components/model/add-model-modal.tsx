@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
-import { X, Upload, File, User } from "lucide-react";
+import { X, Upload, File } from "lucide-react";
 import {
   Dialog,
   DialogContent,

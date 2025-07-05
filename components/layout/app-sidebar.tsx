@@ -5,11 +5,8 @@ import {
   BarChart3,
   Brain,
   FileText,
-  Home,
   Settings,
   Shield,
-  User,
-  Users,
 } from "lucide-react"
 
 import { useAuthStore } from "@/lib/auth-store"

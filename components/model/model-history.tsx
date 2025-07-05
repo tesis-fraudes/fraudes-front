@@ -20,7 +20,6 @@ import {
   CheckCircle, 
   XCircle,
   Calendar,
-  User,
   FileText
 } from "lucide-react";
 
@@ -128,7 +127,7 @@ export function ModelHistory({
                 <span className="text-sm text-gray-600">Ordenar por:</span>
                 <select
                   value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'name' | 'status')}
                   className="text-sm border rounded px-2 py-1"
                 >
                   <option value="date">Fecha</option>

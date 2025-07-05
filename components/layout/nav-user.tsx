@@ -1,9 +1,8 @@
 "use client"
 
 import * as React from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LogOut, Settings, User } from "lucide-react"
+import { LogOut } from "lucide-react"
 import { useAuthStore } from "@/lib/auth-store"
 import { ROUTES } from "@/lib/constants"
 import {
