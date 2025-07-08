@@ -79,7 +79,7 @@ export function Sidebar() {
             <Shield className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-gray-900">FraudGuard</h1>
+            <h1 className="text-lg font-bold text-gray-900">NeuroShield</h1>
           </div>
         </div>
       </div>

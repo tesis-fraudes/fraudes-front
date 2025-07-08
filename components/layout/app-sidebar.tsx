@@ -28,7 +28,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Datos del equipo (simulado)
   const teams = [
     {
-      name: "FraudGuard",
+      name: "NeuroShield",
       logo: Shield,
       plan: "Enterprise",
     },
@@ -69,7 +69,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // Datos del usuario
   const userData = {
     name: user?.name || "Usuario",
-    email: user?.email || "usuario@fraudguard.com",
+    email: user?.email || "usuario@NeuroShield.com",
     avatar: user?.avatar || "/avatars/default.jpg",
     role: user?.role || "usuario",
   }

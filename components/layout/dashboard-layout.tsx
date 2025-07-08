@@ -59,7 +59,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               <BreadcrumbList>
                 <BreadcrumbItem className="hidden md:block">
                   <BreadcrumbLink href={ROUTES.HOME} className="text-blue-600 hover:text-blue-700 font-medium">
-                    FraudGuard
+                    NeuroShield
                   </BreadcrumbLink>
                 </BreadcrumbItem>
                 <BreadcrumbSeparator className="hidden md:block" />

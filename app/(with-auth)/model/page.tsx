@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -15,13 +15,9 @@ import { Brain, Settings, RefreshCw, Pause, Plus } from "lucide-react";
 import { AddModelModal } from "@/components/model/add-model-modal";
 import { ModelHistory } from "@/components/model/model-history";
 import { ModelConfigModal } from "@/components/model/model-config-modal";
-
-interface ModelData {
-  name: string;
-  file: File | null;
-  uploadedBy: string;
-  uploadedAt: Date;
-}
+import { ModelDetailModal, ModelDetail } from "@/components/model/model-detail-modal";
+import { getModels, getModelById } from "@/services/model.service";
+import { toast } from "sonner";
 
 interface ModelHistoryItem {
   id: string;
@@ -35,91 +31,45 @@ interface ModelHistoryItem {
   status: 'active' | 'inactive' | 'training' | 'error';
 }
 
-// Datos simulados para el historial de modelos
-const mockModels: ModelHistoryItem[] = [
-  {
-    id: "1",
-    name: "Modelo_Fraude_v2.1",
-    version: "2.1.3",
-    uploadedBy: "Ana García",
-    uploadedAt: new Date("2024-01-15T09:30:00"),
-    fileSize: 15.7 * 1024 * 1024, // 15.7 MB
-    isActive: true,
-    accuracy: 94.2,
-    status: 'active',
-  },
-  {
-    id: "2",
-    name: "Modelo_Fraude_v2.0",
-    version: "2.0.1",
-    uploadedBy: "Carlos López",
-    uploadedAt: new Date("2024-01-10T14:20:00"),
-    fileSize: 12.3 * 1024 * 1024, // 12.3 MB
-    isActive: false,
-    accuracy: 91.8,
-    status: 'inactive',
-  },
-  {
-    id: "3",
-    name: "Modelo_Fraude_v1.9",
-    version: "1.9.5",
-    uploadedBy: "María Rodríguez",
-    uploadedAt: new Date("2024-01-05T11:15:00"),
-    fileSize: 10.8 * 1024 * 1024, // 10.8 MB
-    isActive: false,
-    accuracy: 89.3,
-    status: 'inactive',
-  },
-  {
-    id: "4",
-    name: "Modelo_Fraude_v2.2_Beta",
-    version: "2.2.0-beta",
-    uploadedBy: "Juan Pérez",
-    uploadedAt: new Date("2024-01-20T16:45:00"),
-    fileSize: 18.2 * 1024 * 1024, // 18.2 MB
-    isActive: false,
-    accuracy: undefined,
-    status: 'training',
-  },
-];
-
 export default function ModelPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
-  const [models, setModels] = useState<ModelHistoryItem[]>(mockModels);
+  const [models, setModels] = useState<ModelHistoryItem[]>([]);
+  const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [selectedModel, setSelectedModel] = useState<ModelDetail | null>(null);
 
-  const handleSaveModel = async (modelData: ModelData) => {
-    // Simular guardado del modelo
-    const newModel: ModelHistoryItem = {
-      id: Date.now().toString(),
-      name: modelData.name,
-      version: "1.0.0",
-      uploadedBy: modelData.uploadedBy,
-      uploadedAt: modelData.uploadedAt,
-      fileSize: modelData.file?.size || 0,
-      isActive: false,
-      accuracy: undefined,
-      status: 'inactive',
-    };
-    
-    setModels(prev => [newModel, ...prev]);
-    console.log("Modelo guardado:", modelData);
+  const fetchModels = async () => {
+    try {
+      const data = await getModels();
+      setModels(data);
+    } catch (error) {
+      console.error("Error al obtener modelos:", error);
+    }
   };
 
-  const handleViewModel = (model: ModelHistoryItem) => {
-    console.log("Ver modelo:", model);
-    // Aquí se abriría un modal con detalles del modelo
-  };
+  useEffect(() => {
+    fetchModels();
+  }, []);
 
-  const handleDownloadModel = (model: ModelHistoryItem) => {
-    console.log("Descargar modelo:", model);
-    // Aquí se descargaría el archivo del modelo
-  };
-
-  const handleDeleteModel = (model: ModelHistoryItem) => {
-    if (confirm(`¿Estás seguro de que quieres eliminar el modelo "${model.name}"?`)) {
-      setModels(prev => prev.filter(m => m.id !== model.id));
-      console.log("Modelo eliminado:", model);
+  const handleViewModel = async (model: ModelHistoryItem) => {
+    try {
+      const data = await getModelById(model.id);
+      // Adaptar los datos recibidos al tipo ModelDetail
+      setSelectedModel({
+        id: data.id?.toString() || model.id,
+        name: data.modelo || model.name,
+        version: data.version || model.version,
+        uploadedBy: "Desconocido",
+        uploadedAt: data.createAt ? new Date(data.createAt) : model.uploadedAt,
+        fileSize: 0,
+        isActive: data.status === "Activo",
+        accuracy: data.accuracy ? parseFloat(data.accuracy) * 100 : model.accuracy,
+        status: data.status === "Activo" ? "active" : "inactive",
+        urlFile: data.urlFile,
+      });
+      setDetailModalOpen(true);
+    } catch (error) {
+      console.error("Error al obtener detalles del modelo:", error);
     }
   };
 
@@ -129,6 +79,7 @@ export default function ModelPage() {
       isActive: m.id === model.id,
       status: m.id === model.id ? 'active' : 'inactive'
     })));
+    toast.success(`Modelo "${model.name}" activado`);
     console.log("Modelo activado:", model);
   };
 
@@ -261,8 +212,6 @@ export default function ModelPage() {
       <ModelHistory
         models={models}
         onViewModel={handleViewModel}
-        onDownloadModel={handleDownloadModel}
-        onDeleteModel={handleDeleteModel}
         onActivateModel={handleActivateModel}
       />
 
@@ -270,13 +219,19 @@ export default function ModelPage() {
       <AddModelModal
         open={isModalOpen}
         onOpenChange={setIsModalOpen}
-        onSave={handleSaveModel}
+        onSuccess={fetchModels}
       />
 
       {/* Modal de configuración del modelo */}
       <ModelConfigModal
         open={isConfigModalOpen}
         onOpenChange={setIsConfigModalOpen}
+      />
+
+      <ModelDetailModal
+        open={detailModalOpen}
+        onOpenChange={setDetailModalOpen}
+        model={selectedModel}
       />
     </div>
   );

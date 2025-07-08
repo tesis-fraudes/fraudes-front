@@ -14,23 +14,16 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useAuthStore } from "@/lib/auth-store";
+import { saveModel } from "@/services/model.service";
+import { toast } from "sonner";
 
 interface AddModelModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSave: (modelData: ModelData) => void;
+  onSuccess?: () => void;
 }
 
-interface ModelData {
-  name: string;
-  file: File | null;
-  uploadedBy: string;
-  uploadedAt: Date;
-}
-
-export function AddModelModal({ open, onOpenChange, onSave }: AddModelModalProps) {
-  const { user } = useAuthStore();
+export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalProps) {
   const [modelName, setModelName] = useState("");
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -45,7 +38,7 @@ export function AddModelModal({ open, onOpenChange, onSave }: AddModelModalProps
     onDrop,
     accept: {
       'application/json': ['.json'],
-      'text/csv': ['.csv'],
+      'text/csv': ['.csv', ".txt"],
       'application/octet-stream': ['.pkl', '.joblib'],
       'application/x-python-code': ['.py']
     },
@@ -59,17 +52,19 @@ export function AddModelModal({ open, onOpenChange, onSave }: AddModelModalProps
 
     setIsLoading(true);
     try {
-      const modelData: ModelData = {
-        name: modelName.trim(),
+      await saveModel({
         file: uploadedFile,
-        uploadedBy: user?.name || "Usuario",
-        uploadedAt: new Date(),
-      };
-      
-      await onSave(modelData);
+        modelo: modelName.trim(),
+        version: "1",
+        accuracy: "100%",
+        status: "Activo"
+      });
+      toast.success("Modelo guardado exitosamente");
+      if (onSuccess) onSuccess();
       handleClose();
     } catch (error) {
       console.error("Error al guardar el modelo:", error);
+      toast.error("Error al guardar el modelo. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }

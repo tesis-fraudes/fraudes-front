@@ -19,10 +19,10 @@ export const ROUTES = {
 
 // Configuración de la aplicación
 export const APP_CONFIG = {
-  NAME: "FraudGuard",
+  NAME: "NeuroShield",
   DESCRIPTION: "Sistema de Detección y Gestión de Fraudes",
   VERSION: "2.1.3",
-  COMPANY: "FraudGuard Inc."
+  COMPANY: "NeuroShield Inc."
 } as const
 
 // Estados de transacciones
@@ -90,8 +90,8 @@ export const API_CONFIG = {
 
 // Configuración de autenticación
 export const AUTH_CONFIG = {
-  TOKEN_KEY: "fraudguard_token",
-  REFRESH_TOKEN_KEY: "fraudguard_refresh_token",
+  TOKEN_KEY: "NeuroShield_token",
+  REFRESH_TOKEN_KEY: "NeuroShield_refresh_token",
   SESSION_TIMEOUT: 30 * 60 * 1000, // 30 minutos
   REMEMBER_ME_DURATION: 7 * 24 * 60 * 60 * 1000 // 7 días
 } as const

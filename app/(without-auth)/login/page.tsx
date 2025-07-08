@@ -48,7 +48,7 @@ export default function LoginPage() {
             <div className="mx-auto w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center mb-4">
               <Shield className="h-8 w-8 text-white" />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">FraudGuard</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900">NeuroShield</CardTitle>
             <CardDescription className="text-gray-600">Sistema de Detección y Gestión de Fraudes</CardDescription>
           </CardHeader>
 
@@ -59,7 +59,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="usuario@fraudguard.com"
+                  placeholder="usuario@NeuroShield.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
