@@ -26,10 +26,15 @@ jobs:
 
       - name: Write .env from secret
         run: |
-          printf '%s\n' "${{ secrets.FRONTEND_ENV_PROD }}" > .env
+          printf '%s\n' "${{ secrets.CI_DEV_ENV }}" > .env
 
       - name: Debug .env
-        run: cat .env 
+        run: |
+          ls -l .env
+          echo "Líneas:"
+          wc -l < .env
+          echo "Contenido:"
+          cat .env
 
       - name: Build frontend
         run: npm run build  # o npm run build si usas vite/react
