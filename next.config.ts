@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const isGithubActions = process.env.GITHUB_ACTIONS === "true";
+const isGithubActions = false // process.env.GITHUB_ACTIONS === "true";
 const repo = "fraudes-front"; // nombre de tu repo
 
 const nextConfig: NextConfig = {
