@@ -1,4 +1,4 @@
-import { Brain } from "lucide-react";
+import { Brain, BarChart3, CreditCard } from "lucide-react";
 
 export interface SubMenuItem {
   id: string;
@@ -36,6 +36,18 @@ export const menuData: MenuSection[] = [
         label: "Modelo de IA",
         href: "/model",
         icon: Brain,
+      },
+      {
+        id: "transactions",
+        label: "Transacciones",
+        href: "/transactions",
+        icon: CreditCard,
+      },
+      {
+        id: "reports",
+        label: "Reportes",
+        href: "/reports",
+        icon: BarChart3,
       },
     ],
   }
