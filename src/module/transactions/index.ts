@@ -1,0 +1,1 @@
+export { default as ContentTransactionsPage } from './components/ContentTransactionsPage';

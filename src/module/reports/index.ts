@@ -1,0 +1,1 @@
+export { default as ContentReportPage } from './components/ContentReportPage';

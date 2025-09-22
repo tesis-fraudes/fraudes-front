@@ -1,51 +1,23 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# 🐳 .dockerignore para optimizar build de Docker
 
-# dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# testing
-/coverage
-
-# next.js
-/.next/
-/.next/**
-/out/
-/out/**
-
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Dependencias
+node_modules
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# local env files
-.env*.local
-.env
+# Build outputs
+.next
+out
+dist
+build
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-Thumbs.db
+# Archivos de desarrollo
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Logs
 logs
@@ -58,14 +30,13 @@ pids
 *.pid.lock
 
 # Coverage directory used by tools like istanbul
-coverage/
+coverage
 *.lcov
 
 # nyc test coverage
 .nyc_output
 
 # Dependency directories
-node_modules/
 jspm_packages/
 
 # Optional npm cache directory
@@ -89,24 +60,19 @@ jspm_packages/
 # Yarn Integrity file
 .yarn-integrity
 
-# dotenv environment variables file
-.env
-.env.test
-.env.production
-
 # parcel-bundler cache (https://parceljs.org/)
 .cache
 .parcel-cache
 
 # Next.js build output
-.next/
-.next/**
-out/
-out/**
+.next
 
 # Nuxt.js build / generate output
 .nuxt
-dist
+
+# Gatsby files
+.cache/
+public
 
 # Storybook build outputs
 .out
@@ -117,14 +83,44 @@ tmp/
 temp/
 
 # Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# old
-old/
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Git
+.git
+.gitignore
+README.md
+
+# Docker
+Dockerfile
+.dockerignore
+docker-compose.yml
+docker-compose.yaml
+
+# CI/CD
+.gitlab-ci.yml
+.github/
+.gitlab/
+
+# Scripts (no necesarios en producción)
+scripts/
+
+# Documentación
+*.md
+docs/
+
+# Archivos de configuración de desarrollo
+.vscode/
+.idea/

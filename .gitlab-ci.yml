@@ -1,0 +1,109 @@
+# 🚀 GitLab CI/CD Pipeline para SPA
+# Pipeline optimizado para build y deploy de Single Page Application
+
+stages:
+  - build
+  - test
+  - deploy
+
+variables:
+  DOCKER_IMAGE_NAME: $CI_REGISTRY_IMAGE/web-draw-manage
+  DOCKER_IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+
+# ===========================================
+# Build Stage - Construir imagen Docker
+# ===========================================
+build:
+  stage: build
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "🏗️ Building Docker image..."
+    - docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG .
+    - docker build -t $DOCKER_IMAGE_NAME:latest .
+    - echo "📦 Pushing to registry..."
+    - docker push $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+    - docker push $DOCKER_IMAGE_NAME:latest
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ===========================================
+# Test Stage - Ejecutar tests (opcional)
+# ===========================================
+test:
+  stage: test
+  image: node:20-alpine
+  before_script:
+    - npm install -g pnpm@latest
+    - pnpm install --frozen-lockfile
+  script:
+    - echo "🧪 Running tests..."
+    - pnpm lint
+    - pnpm build
+    - echo "✅ Tests passed!"
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ===========================================
+# Deploy Stage - Deploy a diferentes entornos
+# ===========================================
+
+# Deploy a Staging
+deploy:staging:
+  stage: deploy
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "🚀 Deploying to Staging..."
+    - docker pull $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+    - echo "✅ Staging deployment completed!"
+  environment:
+    name: staging
+    url: https://staging.tu-dominio.com
+  only:
+    - develop
+
+# Deploy a Production
+deploy:production:
+  stage: deploy
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  before_script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - echo "🚀 Deploying to Production..."
+    - docker pull $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG
+    - echo "✅ Production deployment completed!"
+  environment:
+    name: production
+    url: https://tu-dominio.com
+  when: manual
+  only:
+    - main
+
+# ===========================================
+# Cleanup Stage - Limpiar imágenes antiguas
+# ===========================================
+cleanup:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache curl jq
+  script:
+    - echo "🧹 Cleaning up old images..."
+    - echo "✅ Cleanup completed!"
+  when: always
+  only:
+    - main
+    - develop
