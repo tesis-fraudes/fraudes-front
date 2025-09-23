@@ -1,36 +1,50 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card";
 import { Button } from "@/shared/ui/button";
 import { Badge } from "@/shared/ui/badge";
-import { Brain, Settings, RefreshCw, Pause, Plus, Upload } from "lucide-react";
+import { Brain, RefreshCw, Plus, Upload } from "lucide-react";
 import { useRoleAccess, Permission } from "@/module/guard";
 import { AddModelModal } from "./add-model-modal";
-import { ModelConfigModal } from "./model-config-modal";
 import { ModelDetailModal, type ModelDetail } from "./model-detail-modal";
 import { ModelHistory } from "./model-history";
 import { useModelStore, type ModelData } from "../store/model.store";
+import { toast } from "sonner";
 
 
 export function ContentModelPage() {
   const { canAccess, hasPermission } = useRoleAccess();
   const { 
     error,
-    fetchModels, 
+    fetchModels,
+    fetchActiveModel,
     activateModel, 
-    pauseModel, 
-    trainModel,
+    //pauseModel, 
+    //trainModel,
     getActiveModel,
-    clearError
+    clearError,
+    isActiveModelLoading
   } = useModelStore();
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedModel, setSelectedModel] = useState<ModelDetail | null>(null);
 
   const activeModel = getActiveModel();
+
+  const notifiedNoActive = useRef(false);
+
+  useEffect(() => {
+    fetchActiveModel();
+  }, [fetchActiveModel]);
+
+  useEffect(() => {
+    if (!isActiveModelLoading && !activeModel && !notifiedNoActive.current) {
+      toast.info("No hay modelo activo", { description: "Activa un modelo desde el historial para comenzar." });
+      notifiedNoActive.current = true;
+    }
+  }, [isActiveModelLoading, activeModel]);
 
   const handleUploadModel = () => {
     if (!hasPermission(Permission.MODEL_CREATE)) return;
@@ -40,17 +54,12 @@ export function ContentModelPage() {
   const handleActivateModel = (model: ModelData) => {
     if (!hasPermission(Permission.MODEL_ACTIVATE)) return;
     activateModel(model.id);
+    // al activar, permitir que se muestre nuevamente el aviso si vuelve a no haber activo
+    notifiedNoActive.current = false;
   };
 
-  const handleTrainModel = () => {
-    if (!hasPermission(Permission.MODEL_TRAIN) || !activeModel) return;
-    trainModel(activeModel.id);
-  };
 
-  const handleConfigureModel = () => {
-    if (!hasPermission(Permission.MODEL_CONFIGURE)) return;
-    setIsConfigModalOpen(true);
-  };
+  
 
   const handleViewModel = (model: ModelData) => {
     setSelectedModel(model);
@@ -58,14 +67,12 @@ export function ContentModelPage() {
   };
 
   const handleModelUploadSuccess = () => {
-    // Refrescar la lista de modelos después de subir uno nuevo
+    // Refrescar la lista de modelos y modelo activo después de subir uno nuevo
     fetchModels();
+    fetchActiveModel();
+    notifiedNoActive.current = false;
   };
 
-  const handlePauseModel = () => {
-    if (!hasPermission(Permission.MODEL_ACTIVATE) || !activeModel) return;
-    pauseModel(activeModel.id);
-  };
 
 
   return (
@@ -80,7 +87,11 @@ export function ContentModelPage() {
         <div className="flex gap-2">
           <Button 
             variant="outline" 
-            onClick={fetchModels}
+            onClick={() => {
+              fetchModels();
+              fetchActiveModel();
+              notifiedNoActive.current = false;
+            }}
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Actualizar
@@ -138,23 +149,29 @@ export function ContentModelPage() {
                   Nuevo Modelo
                 </Button>
               )}
-              {hasPermission(Permission.MODEL_TRAIN) && activeModel && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleTrainModel}
-                  disabled={activeModel.status === "training"}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${activeModel.status === "training" ? "animate-spin" : ""}`} />
-                  {activeModel.status === "training" ? "Entrenando..." : "Reentrenar"}
-                </Button>
-              )}
             </div>
           </CardContent>
         </Card>
       )}
 
       {/* Estado del Modelo Activo */}
-      {activeModel && (
+      {isActiveModelLoading ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Modelo Activo
+            </CardTitle>
+            <CardDescription>Información del modelo de detección actualmente en uso</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Cargando modelo activo...</span>
+            </div>
+          </CardContent>
+        </Card>
+      ) : activeModel ? (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -179,7 +196,7 @@ export function ContentModelPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Última Actualización</label>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm text-gray-600 ml-2">
                   {activeModel.uploadedAt.toLocaleDateString("es-ES", {
                     year: "numeric",
                     month: "long",
@@ -191,11 +208,11 @@ export function ContentModelPage() {
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Subido por</label>
-                <span className="text-sm text-gray-600">{activeModel.uploadedBy}</span>
+                <span className="text-sm text-gray-600 ml-2">{activeModel.uploadedBy}</span>
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium">Tamaño del Archivo</label>
-                <span className="text-sm text-gray-600">{activeModel.fileSize} MB</span>
+                <span className="text-sm text-gray-600 ml-2">{activeModel.fileSize} MB</span>
               </div>
             </div>
 
@@ -212,48 +229,38 @@ export function ContentModelPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">1,247</div>
+                <div className="text-2xl font-bold text-blue-600">{activeModel.truePositives ?? 0}</div>
                 <div className="text-xs text-gray-500">Verdaderos Positivos</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-red-600">89</div>
+                <div className="text-2xl font-bold text-red-600">{activeModel.falsePositives ?? 0}</div>
                 <div className="text-xs text-gray-500">Falsos Positivos</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">12</div>
+                <div className="text-2xl font-bold text-blue-600">{activeModel.falseNegatives ?? 0}</div>
                 <div className="text-xs text-gray-500">Falsos Negativos</div>
               </div>
             </div>
 
-            <div className="flex gap-2 flex-wrap">
-              {hasPermission(Permission.MODEL_ACTIVATE) && (
-                <Button 
-                  variant="outline" 
-                  onClick={handlePauseModel}
-                  disabled={activeModel.status === "training"}
-                >
-                  <Pause className="h-4 w-4 mr-2" />
-                  Pausar
-                </Button>
-              )}
-              {hasPermission(Permission.MODEL_CONFIGURE) && (
-                <Button variant="outline" onClick={handleConfigureModel}>
-                  <Settings className="h-4 w-4 mr-2" />
-                  Configurar
-                </Button>
-              )}
-              {hasPermission(Permission.MODEL_TRAIN) && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleTrainModel}
-                  disabled={activeModel.status === "training"}
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${activeModel.status === "training" ? "animate-spin" : ""}`} />
-                  {activeModel.status === "training" ? "Entrenando..." : "Reentrenar"}
-                </Button>
-              )}
+          
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Brain className="h-5 w-5" />
+              Modelo Activo
+            </CardTitle>
+            <CardDescription>Información del modelo de detección actualmente en uso</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-center py-8 text-gray-500">
+              <Brain className="mx-auto h-12 w-12 mb-4 opacity-50" />
+              <p>No hay modelo activo</p>
+              <p className="text-sm">Activa un modelo desde el historial para comenzar</p>
             </div>
           </CardContent>
         </Card>
@@ -272,10 +279,6 @@ export function ContentModelPage() {
         onSuccess={handleModelUploadSuccess}
       />
 
-      <ModelConfigModal
-        open={isConfigModalOpen}
-        onOpenChange={setIsConfigModalOpen}
-      />
 
       <ModelDetailModal
         open={isDetailModalOpen}

@@ -15,6 +15,8 @@ import {
 } from "@/shared/ui/table";
 import { Eye, CheckCircle, XCircle, Calendar, FileText } from "lucide-react";
 import { useModelStore, type ModelData } from "../store/model.store";
+import { useConfirm } from "@/shared/components/modals/useConfirm";
+import { toast } from "sonner";
 
 interface ModelHistoryProps {
   onViewModel: (model: ModelData) => void;
@@ -22,13 +24,36 @@ interface ModelHistoryProps {
 }
 
 export function ModelHistory({ onViewModel, onActivateModel }: ModelHistoryProps) {
-  const { models, isLoading, fetchModels } = useModelStore();
+  const { models, isLoading, fetchModels, activateModel } = useModelStore();
+  const { confirm, ConfirmDialog } = useConfirm();
   const [sortBy, setSortBy] = useState<"date" | "name" | "status">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [activatingId, setActivatingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchModels();
   }, [fetchModels]);
+
+  const handleActivateModel = async (model: ModelData) => {
+    try {
+      const confirmed = await confirm(
+        "Activar modelo",
+        "Esta acción activará este modelo y desactivará los demás.",
+        { confirmText: "Activar", cancelText: "Cancelar" }
+      );
+      if (!confirmed) return;
+
+      setActivatingId(model.id);
+      await activateModel(model.id);
+      onActivateModel(model);
+      try { toast.success("Modelo activado", { description: `Se activó el modelo ${model.name}` }); } catch {}
+    } catch (error) {
+      console.error("Error al activar modelo:", error);
+      try { toast.error("Error al activar", { description: "No se pudo activar el modelo" }); } catch {}
+    } finally {
+      setActivatingId(null);
+    }
+  };
 
   const sortedModels = [...models].sort((a, b) => {
     let comparison = 0;
@@ -52,7 +77,7 @@ export function ModelHistory({ onViewModel, onActivateModel }: ModelHistoryProps
     switch (status) {
       case "active":
         return (
-          <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200">
+          <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
             Activo
           </Badge>
         );
@@ -64,8 +89,8 @@ export function ModelHistory({ onViewModel, onActivateModel }: ModelHistoryProps
         );
       case "training":
         return (
-          <Badge variant="outline" className="border-blue-600 text-blue-600 bg-blue-50">
-            Entrenando
+          <Badge variant="outline" className="border-yellow-600 text-yellow-600 bg-yellow-50">
+            Registrado
           </Badge>
         );
       case "error":
@@ -235,11 +260,16 @@ export function ModelHistory({ onViewModel, onActivateModel }: ModelHistoryProps
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => onActivateModel(model)}
+                              onClick={() => handleActivateModel(model)}
                               title="Activar modelo"
                               className="hover:bg-blue-50 hover:text-blue-600"
+                              disabled={activatingId === model.id}
                             >
-                              <CheckCircle className="h-4 w-4 text-blue-600" />
+                              {activatingId === model.id ? (
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                              ) : (
+                                <CheckCircle className="h-4 w-4 text-blue-600" />
+                              )}
                             </Button>
                           )}
                         </div>
@@ -249,6 +279,7 @@ export function ModelHistory({ onViewModel, onActivateModel }: ModelHistoryProps
                 </TableBody>
               </Table>
             </div>
+            <ConfirmDialog />
           </div>
         )}
       </CardContent>

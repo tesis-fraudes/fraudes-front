@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { getModels } from "../services/model.service";
+import { getModels, activateModel, getActiveModel } from "../services/model.service";
 
 // Tipos de datos para el modelo
 export interface ModelData {
@@ -13,23 +13,28 @@ export interface ModelData {
   accuracy?: number;
   status: "active" | "inactive" | "training" | "error";
   urlFile?: string;
+  truePositives?: number;
+  trueNegatives?: number;
+  falsePositives?: number;
+  falseNegatives?: number;
 }
 
 interface ModelStore {
   // Estado
   models: ModelData[];
+  activeModel: ModelData | null;
   isLoading: boolean;
+  isActiveModelLoading: boolean;
   error: string | null;
   
   // Acciones
   fetchModels: () => Promise<void>;
+  fetchActiveModel: () => Promise<void>;
   setModels: (models: ModelData[]) => void;
   addModel: (model: ModelData) => void;
   updateModel: (id: string, updates: Partial<ModelData>) => void;
   removeModel: (id: string) => void;
-  activateModel: (id: string) => void;
-  pauseModel: (id: string) => void;
-  trainModel: (id: string) => void;
+  activateModel: (id: string) => Promise<void>;
   clearError: () => void;
   
   // Selectores
@@ -40,7 +45,9 @@ interface ModelStore {
 export const useModelStore = create<ModelStore>((set, get) => ({
   // Estado inicial
   models: [],
+  activeModel: null,
   isLoading: false,
+  isActiveModelLoading: false,
   error: null,
 
   // Acciones
@@ -54,6 +61,53 @@ export const useModelStore = create<ModelStore>((set, get) => ({
       set({ 
         error: error instanceof Error ? error.message : "Error al cargar modelos",
         isLoading: false 
+      });
+    }
+  },
+
+  fetchActiveModel: async () => {
+    try {
+      set({ isActiveModelLoading: true, error: null });
+      const activeModelData = await getActiveModel();
+      
+      // Si no hay modelo activo, establecer como null
+      if (!activeModelData) {
+        set({ activeModel: null, isActiveModelLoading: false });
+        return;
+      }
+      
+      // Adaptar la respuesta del modelo activo
+      const adaptedData = Array.isArray(activeModelData) ? activeModelData[0] : activeModelData;
+      
+      if (adaptedData?.id) {
+        // Crear un objeto ModelData compatible
+        const modelData: ModelData = {
+          id: adaptedData.id.toString(),
+          name: adaptedData.modelName || "Modelo Activo",
+          version: `v${adaptedData.id}`,
+          uploadedBy: `Usuario ${adaptedData.userId || "Desconocido"}`,
+          uploadedAt: adaptedData.createAt ? new Date(adaptedData.createAt) : new Date(),
+          fileSize: adaptedData.fileSize || 0,
+          isActive: true,
+          accuracy: typeof adaptedData.accuracy === "number" ? adaptedData.accuracy * 100 : undefined,
+          status: "active",
+          urlFile: adaptedData.urlFile,
+          truePositives: typeof adaptedData.tp === "number" ? adaptedData.tp : undefined,
+          trueNegatives: typeof adaptedData.tn === "number" ? adaptedData.tn : undefined,
+          falsePositives: typeof adaptedData.fp === "number" ? adaptedData.fp : undefined,
+          falseNegatives: typeof adaptedData.fn === "number" ? adaptedData.fn : undefined,
+        };
+        
+        set({ activeModel: modelData, isActiveModelLoading: false });
+      } else {
+        set({ activeModel: null, isActiveModelLoading: false });
+      }
+    } catch (error) {
+      console.error("Error al obtener modelo activo:", error);
+      set({ 
+        error: error instanceof Error ? error.message : "Error al cargar modelo activo",
+        isActiveModelLoading: false,
+        activeModel: null
       });
     }
   },
@@ -74,54 +128,36 @@ export const useModelStore = create<ModelStore>((set, get) => ({
     models: state.models.filter(model => model.id !== id)
   })),
 
-  activateModel: (id) => set((state) => ({
-    models: state.models.map(model => ({
-      ...model,
-      isActive: model.id === id,
-      status: model.id === id ? "active" : "inactive"
-    }))
-  })),
-
-  pauseModel: (id) => set((state) => ({
-    models: state.models.map(model =>
-      model.id === id 
-        ? { ...model, isActive: false, status: "inactive" }
-        : model
-    )
-  })),
-
-  trainModel: (id) => set((state) => {
-    const models = state.models.map(model =>
-      model.id === id 
-        ? { ...model, status: "training" as const }
-        : model
-    );
-    
-    // Simular finalización del entrenamiento después de 3 segundos
-    setTimeout(() => {
-      set((currentState) => ({
-        models: currentState.models.map(model =>
-          model.id === id 
-            ? { 
-                ...model, 
-                status: "active" as const,
-                accuracy: (model.accuracy || 0) + 1,
-                version: model.version.replace(/\d+$/, (match) => String(parseInt(match) + 1))
-              }
-            : model
-        )
+  activateModel: async (id) => {
+    try {
+      // Llamar al servicio de activación
+      await activateModel(id);
+      
+      // Actualizar el estado local
+      set((state) => ({
+        models: state.models.map(model => ({
+          ...model,
+          isActive: model.id === id,
+          status: model.id === id ? "active" : "inactive"
+        }))
       }));
-    }, 3000);
 
-    return { models };
-  }),
+      // Refrescar el modelo activo desde el servicio para obtener métricas actualizadas
+      await get().fetchActiveModel();
+    } catch (error) {
+      console.error("Error al activar modelo:", error);
+      set({ error: error instanceof Error ? error.message : "Error al activar modelo" });
+      throw error;
+    }
+  },
+
 
   clearError: () => set({ error: null }),
 
   // Selectores
   getActiveModel: () => {
-    const { models } = get();
-    return models.find(model => model.isActive);
+    const { activeModel } = get();
+    return activeModel || undefined;
   },
 
   getModelById: (id) => {

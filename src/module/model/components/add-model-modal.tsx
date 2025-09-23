@@ -15,7 +15,7 @@ import { Button } from "@/shared/ui/button";
 import { Input } from "@/shared/ui/input";
 import { Label } from "@/shared/ui/label";
 import { toast } from "sonner";
-import { saveModel } from "../services/model.service";
+import { trainModel } from "../services/model.service";
 
 interface AddModelModalProps {
   open: boolean;
@@ -37,10 +37,7 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/json": [".json"],
       "text/csv": [".csv", ".txt"],
-      "application/octet-stream": [".pkl", ".joblib"],
-      "application/x-python-code": [".py"],
     },
     multiple: false,
   });
@@ -52,19 +49,19 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
 
     setIsLoading(true);
     try {
-      await saveModel({
+      // TODO: reemplazar por el userCode real del contexto de auth si está disponible
+      const userCode = 1;
+      await trainModel({
         file: uploadedFile,
-        modelo: modelName.trim(),
-        version: "1",
-        accuracy: "100%",
-        status: "Activo",
+        modelName: modelName.trim(),
+        userCode,
       });
-      toast.success("Modelo guardado exitosamente");
+      toast.success("Entrenamiento iniciado", { description: "El modelo está siendo entrenado" });
       if (onSuccess) onSuccess();
       handleClose();
     } catch (error) {
-      console.error("Error al guardar el modelo:", error);
-      toast.error("Error al guardar el modelo. Intenta nuevamente.");
+      console.error("Error al iniciar entrenamiento:", error);
+      toast.error("Error al entrenar el modelo. Intenta nuevamente.");
     } finally {
       setIsLoading(false);
     }
@@ -81,9 +78,9 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>Agregar Nuevo Modelo</DialogTitle>
+          <DialogTitle>Entrenar Nuevo Modelo</DialogTitle>
           <DialogDescription>
-            Sube un nuevo modelo de IA para la detección de fraudes
+            Sube un dataset (.csv) para entrenar el modelo de detección de fraudes
           </DialogDescription>
         </DialogHeader>
 
@@ -99,7 +96,7 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
           </div>
 
           <div className="space-y-2">
-            <Label>Archivo del Modelo</Label>
+            <Label>Archivo CSV</Label>
             <div
               {...getRootProps()}
               className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
@@ -137,9 +134,7 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
                     {isDragActive ? "Suelta el archivo aquí" : "Arrastra y suelta el archivo aquí"}
                   </p>
                   <p className="text-sm text-gray-500 mt-1">o haz clic para seleccionar</p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Formatos soportados: .json, .csv, .pkl, .joblib, .py
-                  </p>
+                  <p className="text-xs text-gray-400 mt-2">Formato soportado: .csv</p>
                 </div>
               )}
             </div>
@@ -155,7 +150,7 @@ export function AddModelModal({ open, onOpenChange, onSuccess }: AddModelModalPr
             disabled={!modelName.trim() || !uploadedFile || isLoading}
             className="button-blue-primary"
           >
-            {isLoading ? "Guardando..." : "Guardar Modelo"}
+            {isLoading ? "Enviando..." : "Entrenar"}
           </Button>
         </DialogFooter>
       </DialogContent>

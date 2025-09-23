@@ -29,17 +29,20 @@ export function adaptModelsApiResponse(data: unknown): ModelHistoryItem[] {
     }
     
     const fileSize = 0; // No disponible en la respuesta del API
-    const isActive = item?.status === 2; // status 2 parece ser activo según los datos
+    const isActive = item?.status === 1; // status 1 = Activo según especificación
     const accuracy = typeof item?.accuracy === "number" ? item.accuracy * 100 : undefined; // Convertir a porcentaje
     
-    // Mapear status numérico a string
+    // Mapear status numérico a string según especificación: 0=Registrado, 1=Activo, 2=Inactivo
     let status: "active" | "inactive" | "training" | "error";
     switch (item?.status) {
-      case 2:
-        status = "active";
+      case 0:
+        status = "training"; // Registrado = en proceso
         break;
       case 1:
-        status = "inactive";
+        status = "active"; // Activo
+        break;
+      case 2:
+        status = "inactive"; // Inactivo
         break;
       default:
         status = "inactive";
