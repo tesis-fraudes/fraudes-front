@@ -50,5 +50,17 @@ export const menuData: MenuSection[] = [
         icon: BarChart3,
       },
     ],
+  },
+  {
+    id: "simulation",
+    label: "Simulación",
+    items: [
+      {
+        id: "simulation-compra",
+        label: "Simulación de compra",
+        href: "/simulation/compra",
+        icon: CreditCard,
+      },
+    ],
   }
 ];
