@@ -36,7 +36,7 @@ jobs:
           printf '%s\n' "${{ secrets.CI_DEV_ENV }}" > .env
 
       - name: Build frontend
-        run: pnpm run build
+        run: pnpm run build:static
 
       # Opción 2: Usar secrets tradicionales (comentado)
       - name: Configure AWS credentials
