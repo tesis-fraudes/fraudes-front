@@ -1,4 +1,4 @@
-name: Deploy to S3 (CloudFront)
+name: Deploy to AWS S3 + CloudFront
 
 on:
   push:
@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write  # Para OIDC con AWS
 
 jobs:
   deploy:
@@ -20,12 +21,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: 'pnpm'
 
       - name: Install pnpm
         uses: pnpm/action-setup@v4
         with:
-          version: 9   # usa la versión que tengas en tu proyecto
-          run_install: false
+          version: 9.15.1
 
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
@@ -34,24 +35,45 @@ jobs:
         run: |
           printf '%s\n' "${{ secrets.CI_DEV_ENV }}" > .env
 
-      - name: Debug .env
-        run: |
-          ls -l .env
-          wc -l .env
-
       - name: Build frontend
         run: pnpm run build
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+      # Opción 1: Usar OIDC (más seguro, sin secrets de AWS)
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: us-east-1
+
+      # Opción 2: Usar secrets tradicionales (comentado)
+      # - name: Configure AWS credentials
+      #   uses: aws-actions/configure-aws-credentials@v4
+      #   with:
+      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      #     aws-region: us-east-1
 
       - name: Deploy to S3
         run: |
+          # Subir archivos estáticos con cache largo
+          aws s3 sync ./out/_next/static s3://fraudes-front/_next/static \
+            --cache-control "max-age=31536000,immutable" \
+            --delete
+          
+          # Subir otros archivos con cache corto
           aws s3 sync ./out s3://fraudes-front \
-            --delete \
-            --cache-control "max-age=31536000" \
-            --acl private
+            --exclude "_next/static/*" \
+            --cache-control "max-age=0,must-revalidate" \
+            --delete
+
+      - name: Invalidate CloudFront
+        run: |
+          aws cloudfront create-invalidation \
+            --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} \
+            --paths "/*"
+
+      # Opcional: Notificación a Slack/Discord
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "✅ Deployment successful to AWS S3 + CloudFront"
