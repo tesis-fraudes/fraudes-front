@@ -58,6 +58,10 @@ jobs:
             --exclude "_next/static/*" \
             --cache-control "max-age=0,must-revalidate" \
             --delete
+          
+          # Asegurar que index.html esté en la raíz
+          aws s3 cp ./out/index.html s3://fraudes-front/index.html \
+            --cache-control "max-age=0,must-revalidate"
 
       - name: Invalidate CloudFront
         run: |

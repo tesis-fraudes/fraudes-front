@@ -33,7 +33,10 @@ export function ProtectedRoute({
     if (!isLoading && !isAuthenticated) {
       setShouldRedirect(true);
       // Usar replace en lugar de push para evitar problemas en SPA
-      router.replace(redirectTo);
+      // En producción, asegurar que CloudFront esté configurado para SPA
+      setTimeout(() => {
+        router.replace(redirectTo);
+      }, 100);
     }
   }, [isLoading, isAuthenticated, router, redirectTo]);
 
