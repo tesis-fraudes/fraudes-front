@@ -32,7 +32,8 @@ export function ProtectedRoute({
     // Solo redirigir si no está cargando y no está autenticado
     if (!isLoading && !isAuthenticated) {
       setShouldRedirect(true);
-      router.push(redirectTo);
+      // Usar replace en lugar de push para evitar problemas en SPA
+      router.replace(redirectTo);
     }
   }, [isLoading, isAuthenticated, router, redirectTo]);
 
