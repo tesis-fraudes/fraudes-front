@@ -38,20 +38,13 @@ jobs:
       - name: Build frontend
         run: pnpm run build
 
-      # Opción 1: Usar OIDC (más seguro, sin secrets de AWS)
-      - name: Configure AWS credentials (OIDC)
+      # Opción 2: Usar secrets tradicionales (comentado)
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1
-
-      # Opción 2: Usar secrets tradicionales (comentado)
-      # - name: Configure AWS credentials
-      #   uses: aws-actions/configure-aws-credentials@v4
-      #   with:
-      #     aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-      #     aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-      #     aws-region: us-east-1
 
       - name: Deploy to S3
         run: |
