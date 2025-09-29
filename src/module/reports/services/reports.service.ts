@@ -1,113 +1,59 @@
 // MÓDULO: REPORTES
+import { ENV } from "@/shared/const/env";
 import { apiService } from "@/shared/services";
 
-export interface ReportFilters {
-  dateFrom?: string;
-  dateTo?: string;
-  region?: string;
-  fraudType?: string;
-  riskLevel?: "low" | "medium" | "high";
-  status?: string;
-  merchant?: string;
-}
-
-export interface ReportData {
-  id: string;
-  title: string;
-  type: "fraud_distribution" | "temporal_evolution" | "financial_analysis" | "geographic" | "custom";
-  data: any;
-  generatedAt: string;
-  generatedBy: string;
-  parameters: ReportFilters;
-}
-
-export interface FraudDistributionData {
-  region: string;
-  percentage: number;
-  count: number;
-  amount: number;
-}
-
-export interface TemporalEvolutionData {
-  period: string;
-  fraudCount: number;
-  amount: number;
-  trend: "up" | "down" | "stable";
-}
-
-export interface FinancialAnalysisData {
-  totalDetected: number;
-  averagePerCase: number;
-  maximum: number;
-  minimum: number;
-  median: number;
-  standardDeviation: number;
-}
-
-export interface GeographicData {
-  country: string;
-  region: string;
-  fraudCount: number;
-  amount: number;
-  riskLevel: "low" | "medium" | "high";
-}
-
-export async function generateFraudDistributionReport(
-  filters: ReportFilters = {}
-): Promise<FraudDistributionData[]> {
-  try {
-    const response = await apiService.get("/reports/fraud-distribution", {
-      params: filters,
-      headers: {
-        accept: "*/*",
-      },
-    });
-    return (response.data as FraudDistributionData[]) || [];
-  } catch (error) {
-    console.error("Error al generar reporte de distribución de fraudes:", error);
-    throw error;
-  }
-}
-
-// Nuevas funciones usando endpoints reales
+// Tipos para transacciones aprobadas
 export interface ApprovedTransaction {
   id: string;
+  transaction_id: string;
+  customer_name: string;
+  business_name: string;
   amount: number;
-  merchant: string;
-  customer_id: number;
-  business_id: number;
+  payment_method: string;
+  created_at: string;
   approved_at: string;
   approved_by: string;
   risk_score: number;
-  transaction_date: string;
+  model_used: string;
+  observation: string;
+  consequences: string;
 }
 
+// Tipos para transacciones rechazadas
 export interface RejectedTransaction {
   id: string;
+  transaction_id: string;
+  customer_name: string;
+  business_name: string;
   amount: number;
-  merchant: string;
-  customer_id: number;
-  business_id: number;
+  payment_method: string;
+  created_at: string;
   rejected_at: string;
   rejected_by: string;
-  rejection_reason: string;
   risk_score: number;
-  transaction_date: string;
+  model_used: string;
+  observation: string;
+  consequences: string;
 }
 
-export interface PredictedTransaction {
+// Tipos para predicciones de modelos
+export interface ModelPrediction {
   id: string;
-  amount: number;
-  merchant: string;
-  customer_id: number;
-  business_id: number;
-  prediction: number;
-  risk_score: number;
-  predicted_at: string;
   model_name: string;
-  transaction_date: string;
+  model_version: string;
+  prediction_id: string;
+  transaction_id: string;
+  customer_name: string;
+  business_name: string;
+  amount: number;
+  risk_score: number;
+  prediction: "approved" | "rejected" | "flagged";
+  confidence: number;
+  created_at: string;
+  processed_at: string;
 }
 
+// Parámetros de consulta
 export interface ReportQueryParams {
   start_date: string;
   end_date: string;
@@ -115,282 +61,210 @@ export interface ReportQueryParams {
   offset?: number;
 }
 
+// Respuesta de la API
+export interface ReportResponse<T> {
+  data: T[];
+  total: number;
+  limit: number;
+  offset: number;
+  has_more: boolean;
+}
+
+// Servicio para transacciones aprobadas
 export async function getApprovedTransactions(
   params: ReportQueryParams
-): Promise<{
-  transactions: ApprovedTransaction[];
-  total: number;
-  limit: number;
-  offset: number;
-}> {
+): Promise<ReportResponse<ApprovedTransaction>> {
   try {
-    const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/transactions/approveds",
-      {
-        params,
-        headers: {
-          accept: "*/*",
-        },
-      }
-    );
-    return response.data as {
-      transactions: ApprovedTransaction[];
-      total: number;
-      limit: number;
-      offset: number;
-    };
-  } catch (error) {
-    console.error("Error al obtener transacciones aprobadas:", error);
-    throw error;
-  }
-}
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+      limit: (params.limit || 50).toString(),
+      offset: (params.offset || 0).toString(),
+    });
 
-export async function getRejectedTransactions(
-  params: ReportQueryParams
-): Promise<{
-  transactions: RejectedTransaction[];
-  total: number;
-  limit: number;
-  offset: number;
-}> {
-  try {
     const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/transactions/rejecteds",
+      `${ENV.API_URL_TRANSACTIONS}/report/transactions/approveds?${queryParams}`,
       {
-        params,
         headers: {
           accept: "*/*",
         },
       }
     );
-    return response.data as {
-      transactions: RejectedTransaction[];
-      total: number;
-      limit: number;
-      offset: number;
-    };
-  } catch (error) {
-    console.error("Error al obtener transacciones rechazadas:", error);
-    throw error;
-  }
-}
 
-export async function getPredictedTransactions(
-  params: ReportQueryParams
-): Promise<{
-  transactions: PredictedTransaction[];
-  total: number;
-  limit: number;
-  offset: number;
-}> {
-  try {
-    const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/predicted",
-      {
-        params,
-        headers: {
-          accept: "*/*",
-        },
-      }
-    );
-    return response.data as {
-      transactions: PredictedTransaction[];
-      total: number;
-      limit: number;
-      offset: number;
+    const raw: any = response as any;
+    const data: ApprovedTransaction[] = Array.isArray(raw)
+      ? (raw as ApprovedTransaction[])
+      : (raw?.data as ApprovedTransaction[]) || [];
+
+    const normalized: ReportResponse<ApprovedTransaction> = {
+      data,
+      total: typeof raw?.total === "number" ? raw.total : data.length,
+      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
+      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
+      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
     };
+
+    return normalized;
   } catch (error) {
-    console.error("Error al obtener transacciones predichas:", error);
     throw error;
   }
 }
 
 export async function exportApprovedTransactions(
-  params: ReportQueryParams
+  params: Omit<ReportQueryParams, 'limit' | 'offset'>
 ): Promise<Blob> {
   try {
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+    });
+
     const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/transactions/approveds/export",
+      `${ENV.API_URL_TRANSACTIONS}/report/transactions/approveds/export?${queryParams}`,
       {
-        params,
-        responseType: "blob",
         headers: {
           accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         },
+        responseType: "blob",
       }
     );
-    return response.data as Blob;
+
+    return response as unknown as Blob;
   } catch (error) {
     console.error("Error al exportar transacciones aprobadas:", error);
     throw error;
   }
 }
 
-export async function exportRejectedTransactions(
+// Servicio para transacciones rechazadas
+export async function getRejectedTransactions(
   params: ReportQueryParams
-): Promise<Blob> {
+): Promise<ReportResponse<RejectedTransaction>> {
   try {
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+      limit: (params.limit || 50).toString(),
+      offset: (params.offset || 0).toString(),
+    });
+
     const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/transactions/rejecteds/export",
+      `${ENV.API_URL_TRANSACTIONS}/report/transactions/rejecteds?${queryParams}`,
       {
-        params,
-        responseType: "blob",
         headers: {
-          accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          accept: "*/*",
         },
       }
     );
-    return response.data as Blob;
+
+    const raw: any = response as any;
+    const data: RejectedTransaction[] = Array.isArray(raw)
+      ? (raw as RejectedTransaction[])
+      : (raw?.data as RejectedTransaction[]) || [];
+
+    const normalized: ReportResponse<RejectedTransaction> = {
+      data,
+      total: typeof raw?.total === "number" ? raw.total : data.length,
+      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
+      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
+      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
+    };
+
+    return normalized;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function exportRejectedTransactions(
+  params: Omit<ReportQueryParams, 'limit' | 'offset'>
+): Promise<Blob> {
+  try {
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+    });
+
+    const response = await apiService.get(
+      `${ENV.API_URL_TRANSACTIONS}/report/transactions/rejecteds/export?${queryParams}`,
+      {
+        headers: {
+          accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        responseType: "blob",
+      }
+    );
+
+    return response as unknown as Blob;
   } catch (error) {
     console.error("Error al exportar transacciones rechazadas:", error);
     throw error;
   }
 }
 
-export async function exportPredictedTransactions(
+// Servicio para predicciones de modelos
+export async function getModelPredictions(
   params: ReportQueryParams
-): Promise<Blob> {
+): Promise<ReportResponse<ModelPrediction>> {
   try {
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+      limit: (params.limit || 50).toString(),
+      offset: (params.offset || 0).toString(),
+    });
+
     const response = await apiService.get(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/report/predicted/export",
-      {
-        params,
-        responseType: "blob",
-        headers: {
-          accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        },
-      }
-    );
-    return response.data as Blob;
-  } catch (error) {
-    console.error("Error al exportar transacciones predichas:", error);
-    throw error;
-  }
-}
-
-export async function generateTemporalEvolutionReport(
-  filters: ReportFilters = {}
-): Promise<TemporalEvolutionData[]> {
-  try {
-    const response = await apiService.get("/reports/temporal-evolution", {
-      params: filters,
-      headers: {
-        accept: "*/*",
-      },
-    });
-    return (response.data as TemporalEvolutionData[]) || [];
-  } catch (error) {
-    console.error("Error al generar reporte de evolución temporal:", error);
-    throw error;
-  }
-}
-
-export async function generateFinancialAnalysisReport(
-  filters: ReportFilters = {}
-): Promise<FinancialAnalysisData> {
-  try {
-    const response = await apiService.get("/reports/financial-analysis", {
-      params: filters,
-      headers: {
-        accept: "*/*",
-      },
-    });
-    return response.data as FinancialAnalysisData;
-  } catch (error) {
-    console.error("Error al generar reporte de análisis financiero:", error);
-    throw error;
-  }
-}
-
-export async function generateGeographicReport(
-  filters: ReportFilters = {}
-): Promise<GeographicData[]> {
-  try {
-    const response = await apiService.get("/reports/geographic", {
-      params: filters,
-      headers: {
-        accept: "*/*",
-      },
-    });
-    return (response.data as GeographicData[]) || [];
-  } catch (error) {
-    console.error("Error al generar reporte geográfico:", error);
-    throw error;
-  }
-}
-
-export async function exportReport(
-  reportId: string,
-  format: "pdf" | "excel" | "csv" = "pdf"
-): Promise<Blob> {
-  try {
-    const response = await apiService.get(`/reports/${reportId}/export`, {
-      params: { format },
-      responseType: "blob",
-      headers: {
-        accept: format === "pdf" ? "application/pdf" : "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      },
-    });
-    return response.data as Blob;
-  } catch (error) {
-    console.error("Error al exportar reporte:", error);
-    throw error;
-  }
-}
-
-export async function getReportHistory(
-  page: number = 1,
-  limit: number = 10
-): Promise<{
-  reports: ReportData[];
-  total: number;
-  page: number;
-  totalPages: number;
-}> {
-  try {
-    const response = await apiService.get("/reports/history", {
-      params: { page, limit },
-      headers: {
-        accept: "*/*",
-      },
-    });
-
-    const data = response.data as any;
-    return {
-      reports: data.reports || [],
-      total: data.total || 0,
-      page: data.page || 1,
-      totalPages: data.totalPages || 1,
-    };
-  } catch (error) {
-    console.error("Error al obtener historial de reportes:", error);
-    throw error;
-  }
-}
-
-export async function scheduleReport(
-  reportType: string,
-  filters: ReportFilters,
-  schedule: {
-    frequency: "daily" | "weekly" | "monthly";
-    time: string;
-    email?: string;
-  }
-): Promise<{ scheduleId: string }> {
-  try {
-    const response = await apiService.post(
-      "/reports/schedule",
-      { reportType, filters, schedule },
+      `${ENV.API_URL_TRANSACTIONS}/report/predicted?${queryParams}`,
       {
         headers: {
-          "Content-Type": "application/json",
           accept: "*/*",
         },
       }
     );
-    return response.data as { scheduleId: string };
+
+    // Normalizar respuesta: puede venir como { data, total, ... } o como array plano
+    const raw: any = response as any;
+    const data: ModelPrediction[] = Array.isArray(raw)
+      ? (raw as ModelPrediction[])
+      : (raw?.data as ModelPrediction[]) || [];
+
+    const normalized: ReportResponse<ModelPrediction> = {
+      data,
+      total: typeof raw?.total === "number" ? raw.total : data.length,
+      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
+      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
+      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
+    };
+
+    return normalized;
   } catch (error) {
-    console.error("Error al programar reporte:", error);
+    throw error;
+  }
+}
+
+export async function exportModelPredictions(
+  params: Omit<ReportQueryParams, 'limit' | 'offset'>
+): Promise<Blob> {
+  try {
+    const queryParams = new URLSearchParams({
+      start_date: params.start_date,
+      end_date: params.end_date,
+    });
+
+    const response = await apiService.get(
+      `${ENV.API_URL_TRANSACTIONS}/report/predicted/export?${queryParams}`,
+      {
+        headers: {
+          accept: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        },
+        responseType: "blob",
+      }
+    );
+
+    return response as unknown as Blob;
+  } catch (error) {
+    console.error("Error al exportar predicciones de modelos:", error);
     throw error;
   }
 }

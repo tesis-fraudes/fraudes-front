@@ -1,30 +1,18 @@
 // Servicios
 export {
-  generateFraudDistributionReport,
-  generateTemporalEvolutionReport,
-  generateFinancialAnalysisReport,
-  generateGeographicReport,
-  exportReport,
-  getReportHistory,
-  scheduleReport,
   getApprovedTransactions,
-  getRejectedTransactions,
-  getPredictedTransactions,
   exportApprovedTransactions,
+  getRejectedTransactions,
   exportRejectedTransactions,
-  exportPredictedTransactions,
+  getModelPredictions,
+  exportModelPredictions,
 } from "./reports.service";
 
 // Tipos
 export type {
-  ReportFilters,
-  ReportData,
-  FraudDistributionData,
-  TemporalEvolutionData,
-  FinancialAnalysisData,
-  GeographicData,
   ApprovedTransaction,
   RejectedTransaction,
-  PredictedTransaction,
+  ModelPrediction,
   ReportQueryParams,
+  ReportResponse,
 } from "./reports.service";

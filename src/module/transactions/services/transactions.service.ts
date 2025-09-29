@@ -57,6 +57,7 @@ export interface TransactionFilters {
   dateTo?: string;
   merchant?: string;
   fraudType?: string;
+  riskLevel?: string; // low | medium | high
 }
 
 export interface TransactionSearchParams {

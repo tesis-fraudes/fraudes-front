@@ -40,12 +40,23 @@ export async function simulateTransaction(
   payload: PurchaseTransactionPayload
 ): Promise<SimulationResponse> {
   try {
-    const response = await apiService.request({
-      method: config.httpMethod as any,
-      url: config.endpointUrl,
-      data: payload,
-      headers: config.headers,
-    });
+    const method = (config.httpMethod || "POST").toUpperCase();
+    const url = config.endpointUrl;
+    const headers = config.headers;
+    let response: any;
+
+    if (method === "GET") {
+      response = await apiService.get(url, { headers });
+    } else if (method === "PUT") {
+      response = await apiService.put(url, payload, { headers });
+    } else if (method === "PATCH") {
+      response = await apiService.patch(url, payload, { headers });
+    } else if (method === "DELETE") {
+      response = await apiService.delete(url, { headers });
+    } else {
+      // Default POST
+      response = await apiService.post(url, payload, { headers });
+    }
 
     return {
       prediction: response.data.prediction || 0,
@@ -54,7 +65,6 @@ export async function simulateTransaction(
       timestamp: new Date().toISOString(),
     };
   } catch (error) {
-    console.error("Error en simulación de transacción:", error);
     throw error;
   }
 }
@@ -66,7 +76,7 @@ export async function getSimulationModels(): Promise<Array<{ id: string; name: s
         accept: "*/*",
       },
     });
-    return response.data || [];
+    return (response.data as any[]) || [];
   } catch (error) {
     console.error("Error al obtener modelos de simulación:", error);
     return [];
@@ -109,7 +119,7 @@ export async function getBusinesses(): Promise<Business[]> {
         accept: "*/*",
       },
     });
-    return response.data || [];
+    return (response.data as any[]) || [];
   } catch (error) {
     console.error("Error al obtener negocios:", error);
     return [];
@@ -123,7 +133,7 @@ export async function getCustomers(): Promise<Customer[]> {
         accept: "*/*",
       },
     });
-    return response.data || [];
+    return (response.data as any[]) || [];
   } catch (error) {
     console.error("Error al obtener clientes:", error);
     return [];
@@ -140,7 +150,7 @@ export async function getCustomerActivePaymentMethods(customerId: number): Promi
         },
       }
     );
-    return response.data || [];
+    return (response.data as any[]) || [];
   } catch (error) {
     console.error("Error al obtener métodos de pago activos:", error);
     return [];
@@ -157,7 +167,7 @@ export async function getConfigParameters(parameterType: string): Promise<Config
         },
       }
     );
-    return response.data || [];
+    return (response.data as any[]) || [];
   } catch (error) {
     console.error(`Error al obtener parámetros de configuración para ${parameterType}:`, error);
     return [];

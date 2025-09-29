@@ -46,8 +46,24 @@ export const menuData: MenuSection[] = [
       {
         id: "reports",
         label: "Reportes",
-        href: "/reports",
         icon: BarChart3,
+        children: [
+          {
+            id: "reports-predictions",
+            label: "Predicciones realizadas",
+            href: "/reports/predictions",
+          },
+          {
+            id: "reports-approved-transactions",
+            label: "Transacciones aprobadas",
+            href: "/reports/approved-transactions",
+          },
+          {
+            id: "reports-rejected-transactions",
+            label: "Transacciones rechazadas",
+            href: "/reports/rejected-transactions",
+          },
+        ],
       },
     ],
   },
