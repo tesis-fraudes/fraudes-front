@@ -10,6 +10,7 @@ import { ConfigModal } from "./ConfigModal";
 import { LogsPanel } from "./LogsPanel";
 import { useSimulationStore } from "../store/simulation.store";
 import type { TransactionFormValues } from "./TransactionForm";
+import { getApprovalResults } from "../../approval/services/approval.service";
 
 type SimulationResult = {
   riskScore: number;
@@ -22,6 +23,8 @@ export default function ContentSimulationCompraPage() {
   // estado interno sólo para resultado
   const [isLoopRunning, setIsLoopRunning] = useState<boolean>(false);
   const [isConfigOpen, setIsConfigOpen] = useState<boolean>(false);
+  const [approvalOptions, setApprovalOptions] = useState<Array<{clave: string, valor: string}>>([]);
+  const [selectedApprovalReason, setSelectedApprovalReason] = useState<string>("");
   const loopRef = useRef<NodeJS.Timeout | null>(null);
   const { form, endpointUrl, httpMethod, headersJson, intervalMs, addLog, setForm } =
     useSimulationStore();
@@ -111,6 +114,24 @@ export default function ContentSimulationCompraPage() {
     return () => {
       if (loopRef.current) clearInterval(loopRef.current);
     };
+  }, []);
+
+  // Cargar opciones de aprobación al montar el componente
+  useEffect(() => {
+    const loadApprovalOptions = async () => {
+      try {
+        const options = await getApprovalResults();
+        // Mapear ApprovalResult a {clave, valor}
+        const mappedOptions = options.map(option => ({
+          clave: option.name,
+          valor: option.value
+        }));
+        setApprovalOptions(mappedOptions);
+      } catch (error) {
+        console.error("Error cargando opciones de aprobación:", error);
+      }
+    };
+    loadApprovalOptions();
   }, []);
 
   // Generación con Faker ahora está en el formulario o acciones separadas (no usado aquí)
@@ -212,6 +233,29 @@ export default function ContentSimulationCompraPage() {
                     <li key={i}>{r}</li>
                   ))}
                 </ul>
+              </div>
+            )}
+
+            {result.decision === "aprobada" && approvalOptions.length > 0 && (
+              <div className="mt-4">
+                <label className="text-sm text-gray-600 mb-2 block">Razón de aprobación:</label>
+                <select
+                  value={selectedApprovalReason}
+                  onChange={(e) => setSelectedApprovalReason(e.target.value)}
+                  className="w-full h-10 border rounded px-3 bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                >
+                  <option value="">Selecciona una razón...</option>
+                  {approvalOptions.map((option, index) => (
+                    <option key={index} value={option.valor}>
+                      {option.valor}
+                    </option>
+                  ))}
+                </select>
+                {selectedApprovalReason && (
+                  <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm text-green-800">
+                    <strong>Razón seleccionada:</strong> {selectedApprovalReason}
+                  </div>
+                )}
               </div>
             )}
           </CardContent>

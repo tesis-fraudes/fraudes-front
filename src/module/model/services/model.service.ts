@@ -1,3 +1,4 @@
+// MÓDULO: TRANSACCIÓN (Predicciones y compras)
 import { apiService } from "@/shared/services";
 import { adaptModelsApiResponse } from "../adapters/model.adapter";
 
@@ -116,6 +117,62 @@ export async function getActiveModel() {
       }
     }
     
+    throw error;
+  }
+}
+
+// Nueva función para predicción de transacciones usando el endpoint real
+export interface TransactionPredictionPayload {
+  business_id: number;
+  customer_id: number;
+  payment_id: number;
+  user_id: number;
+  transaction_amount: number;
+  transaction_hour: number;
+  is_proxy: boolean;
+  distance_home_shipping: number;
+  avg_monthly_spend: number;
+  previous_frauds: number;
+  device_type: string;
+  browser: string;
+  country_ip: string;
+  card_type: string;
+  payment_method: string;
+  card_country: string;
+  business_country: string;
+}
+
+export interface TransactionPredictionResponse {
+  prediction: number;
+  risk_score: number;
+  is_fraud: boolean;
+  confidence: number;
+  recommendation: string;
+}
+
+export async function predictTransaction(payload: TransactionPredictionPayload): Promise<TransactionPredictionResponse> {
+  try {
+    const response = await apiService.post(
+      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/transaction/purchase",
+      payload,
+      {
+        headers: {
+          "Content-Type": "application/json",
+          accept: "*/*",
+        },
+      }
+    );
+    
+    const data = response.data as any;
+    return {
+      prediction: data.prediction || 0,
+      risk_score: data.risk_score || 0,
+      is_fraud: data.is_fraud || false,
+      confidence: data.confidence || 0,
+      recommendation: data.recommendation || "Revisar manualmente",
+    };
+  } catch (error) {
+    console.error("Error al predecir transacción:", error);
     throw error;
   }
 }

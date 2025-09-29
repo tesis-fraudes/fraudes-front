@@ -6,6 +6,7 @@ export interface User {
   name: string;
   role: UserRole;
   permissions: Permission[];
+  businessId?: number;
 }
 
 export interface AuthState {
