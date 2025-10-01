@@ -99,7 +99,7 @@ export function ContentModelPage() {
           {hasPermission(Permission.MODEL_CREATE) && (
             <Button onClick={handleUploadModel} className="bg-blue-600 hover:bg-blue-700">
               <Upload className="h-4 w-4 mr-2" />
-              Subir Modelo
+              Subir Dataset
             </Button>
           )}
         </div>
@@ -146,7 +146,7 @@ export function ContentModelPage() {
               {hasPermission(Permission.MODEL_CREATE) && (
                 <Button variant="outline" onClick={handleUploadModel}>
                   <Plus className="h-4 w-4 mr-2" />
-                  Nuevo Modelo
+                  Nuevo Dataset
                 </Button>
               )}
             </div>

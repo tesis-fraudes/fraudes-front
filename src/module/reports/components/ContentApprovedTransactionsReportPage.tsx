@@ -6,26 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Filter, CheckCircle, RefreshCw, CreditCard, User, Building } from "lucide-react";
+import { Download, Filter, CheckCircle, RefreshCw, CreditCard, User } from "lucide-react";
 import { toast } from "sonner";
 import { getApprovedTransactions, exportApprovedTransactions, type ApprovedTransaction, type ReportQueryParams } from "../services";
 
 export default function ContentApprovedTransactionsReportPage() {
   const [transactions, setTransactions] = useState<ApprovedTransaction[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     start_date: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
   });
-
-  const filteredTransactions = (transactions || []).filter(transaction =>
-    transaction.transaction_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    transaction.customer_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    transaction.business_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    transaction.approved_by.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const loadTransactions = async () => {
     setIsLoading(true);
@@ -86,10 +78,10 @@ export default function ContentApprovedTransactionsReportPage() {
     });
   };
 
-  const formatAmount = (amount: number) => {
+  const formatAmount = (amount: number, currency: string = "USD") => {
     return new Intl.NumberFormat("es-MX", {
       style: "currency",
-      currency: "MXN",
+      currency: currency,
     }).format(amount);
   };
 
@@ -105,7 +97,9 @@ export default function ContentApprovedTransactionsReportPage() {
 
   const totalAmount = transactions.reduce((sum, t) => sum + t.amount, 0);
   const avgRiskScore = transactions.length > 0 ? 
-    (transactions.reduce((sum, t) => sum + t.risk_score, 0) / transactions.length).toFixed(1) : 0;
+    (transactions.reduce((sum, t) => sum + t.fraud_score, 0) / transactions.length).toFixed(1) : 0;
+  
+  const uniqueModels = new Set((transactions || []).map(t => t.model_name)).size;
 
   useEffect(() => {
     loadTransactions();
@@ -143,16 +137,7 @@ export default function ContentApprovedTransactionsReportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar por ID, cliente, negocio o analista..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-gray-600 mb-1 block">Fecha inicio</label>
               <Input
@@ -192,7 +177,7 @@ export default function ContentApprovedTransactionsReportPage() {
               <CreditCard className="h-5 w-5 text-blue-600" />
               <div>
                 <p className="text-sm text-gray-600">Monto Total</p>
-                <p className="text-2xl font-bold">{formatAmount(totalAmount)}</p>
+                <p className="text-2xl font-bold">{formatAmount(totalAmount, transactions[0]?.currency || "USD")}</p>
               </div>
             </div>
           </CardContent>
@@ -215,9 +200,9 @@ export default function ContentApprovedTransactionsReportPage() {
             <div className="flex items-center gap-2">
               <User className="h-5 w-5 text-purple-600" />
               <div>
-                <p className="text-sm text-gray-600">Analistas Únicos</p>
+                <p className="text-sm text-gray-600">Modelos Únicos</p>
                 <p className="text-2xl font-bold">
-                  {new Set(transactions.map(t => t.approved_by)).size}
+                  {uniqueModels}
                 </p>
               </div>
             </div>
@@ -247,50 +232,62 @@ export default function ContentApprovedTransactionsReportPage() {
                   <TableHead>Cliente</TableHead>
                   <TableHead>Negocio</TableHead>
                   <TableHead>Método de Pago</TableHead>
-                  <TableHead>Monto</TableHead>
-                  <TableHead>Score</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                  <TableHead className="text-center">Score Fraude</TableHead>
                   <TableHead>Modelo</TableHead>
-                  <TableHead>Analista</TableHead>
-                  <TableHead>Fecha Aprobación</TableHead>
+                  <TableHead>Fecha</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTransactions.length === 0 ? (
+                {transactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No se encontraron transacciones aprobadas para el rango de fechas seleccionado
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredTransactions.map((transaction) => (
-                    <TableRow key={transaction.id}>
+                  transactions.map((transaction) => (
+                    <TableRow key={transaction.transaction_id}>
                       <TableCell className="font-mono font-medium">
-                        {transaction.transaction_id}
+                        #{transaction.transaction_id}
                       </TableCell>
-                      <TableCell className="font-medium">{transaction.customer_name}</TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        <Building className="h-4 w-4 text-gray-400" />
-                        {transaction.business_name}
-                      </TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        <CreditCard className="h-4 w-4 text-gray-400" />
-                        {transaction.payment_method}
-                      </TableCell>
-                      <TableCell className="font-semibold">
-                        {formatAmount(transaction.amount)}
-                      </TableCell>
-                      <TableCell>{getRiskBadge(transaction.risk_score)}</TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {transaction.model_used}
-                        </Badge>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{transaction.customer_name}</span>
+                          <span className="text-xs text-gray-500">ID: {transaction.customer_id}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        {transaction.approved_by}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{transaction.trade_name || transaction.company_name}</span>
+                          <span className="text-xs text-gray-500">{transaction.company_name}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-gray-400" />
+                          <div className="flex flex-col">
+                            <span className="font-medium text-sm">{transaction.provider}</span>
+                            <span className="text-xs text-gray-500">{transaction.type_payment}</span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-semibold">
+                        {formatAmount(transaction.amount, transaction.currency)}
+                      </TableCell>
+                      <TableCell className="text-center">
+                        {getRiskBadge(transaction.fraud_score)}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <Badge variant="outline" className="font-mono w-fit">
+                            {transaction.model_name}
+                          </Badge>
+                          <span className="text-xs text-gray-500 mt-1">ID: {transaction.model_id}</span>
+                        </div>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        {formatDate(transaction.approved_at)}
+                        {formatDate(transaction.created_at)}
                       </TableCell>
                     </TableRow>
                   ))

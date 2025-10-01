@@ -4,53 +4,63 @@ import { apiService } from "@/shared/services";
 
 // Tipos para transacciones aprobadas
 export interface ApprovedTransaction {
-  id: string;
-  transaction_id: string;
-  customer_name: string;
-  business_name: string;
-  amount: number;
-  payment_method: string;
+  transaction_id: number;
   created_at: string;
-  approved_at: string;
-  approved_by: string;
-  risk_score: number;
-  model_used: string;
-  observation: string;
-  consequences: string;
+  amount: number;
+  currency: string;
+  fraud_score: number;
+  status: number;
+  business_id: number;
+  company_name: string;
+  trade_name: string;
+  customer_id: number;
+  customer_name: string;
+  payment_id: number;
+  type_payment: string;
+  provider: string;
+  model_id: number;
+  model_name: string;
 }
 
 // Tipos para transacciones rechazadas
 export interface RejectedTransaction {
-  id: string;
-  transaction_id: string;
-  customer_name: string;
-  business_name: string;
-  amount: number;
-  payment_method: string;
+  transaction_id: number;
   created_at: string;
-  rejected_at: string;
-  rejected_by: string;
-  risk_score: number;
-  model_used: string;
-  observation: string;
-  consequences: string;
+  amount: number;
+  currency: string;
+  fraud_score: number;
+  status: number;
+  business_id: number;
+  company_name: string;
+  trade_name: string;
+  customer_id: number;
+  customer_name: string;
+  payment_id: number;
+  type_payment: string;
+  provider: string;
+  model_id: number;
+  model_name: string;
 }
 
 // Tipos para predicciones de modelos
 export interface ModelPrediction {
-  id: string;
-  model_name: string;
-  model_version: string;
-  prediction_id: string;
-  transaction_id: string;
-  customer_name: string;
-  business_name: string;
-  amount: number;
-  risk_score: number;
-  prediction: "approved" | "rejected" | "flagged";
-  confidence: number;
+  prediction_id: number;
   created_at: string;
-  processed_at: string;
+  fraud_score: number;
+  class: string;
+  prediction: number;
+  fraud_probability: number;
+  model_id: number;
+  model_name: string;
+  transaction_id: number;
+  amount: number;
+  currency: string;
+  transaction_fraud_score: number;
+  business_id: number;
+  company_name: string;
+  trade_name: string;
+  customer_id: number;
+  customer_name: string;
 }
 
 // Parámetros de consulta
@@ -91,17 +101,17 @@ export async function getApprovedTransactions(
       }
     );
 
+    // La API devuelve { items: [...], meta: { limit, offset } }
     const raw: any = response as any;
-    const data: ApprovedTransaction[] = Array.isArray(raw)
-      ? (raw as ApprovedTransaction[])
-      : (raw?.data as ApprovedTransaction[]) || [];
+    const items = raw?.items || raw?.data || (Array.isArray(raw) ? raw : []);
+    const meta = raw?.meta || {};
 
     const normalized: ReportResponse<ApprovedTransaction> = {
-      data,
-      total: typeof raw?.total === "number" ? raw.total : data.length,
-      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
-      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
-      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
+      data: items,
+      total: items.length,
+      limit: meta.limit || (params.limit || 50),
+      offset: meta.offset || (params.offset || 0),
+      has_more: items.length >= (meta.limit || params.limit || 50),
     };
 
     return normalized;
@@ -157,17 +167,17 @@ export async function getRejectedTransactions(
       }
     );
 
+    // La API devuelve { items: [...], meta: { limit, offset } }
     const raw: any = response as any;
-    const data: RejectedTransaction[] = Array.isArray(raw)
-      ? (raw as RejectedTransaction[])
-      : (raw?.data as RejectedTransaction[]) || [];
+    const items = raw?.items || raw?.data || (Array.isArray(raw) ? raw : []);
+    const meta = raw?.meta || {};
 
     const normalized: ReportResponse<RejectedTransaction> = {
-      data,
-      total: typeof raw?.total === "number" ? raw.total : data.length,
-      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
-      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
-      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
+      data: items,
+      total: items.length,
+      limit: meta.limit || (params.limit || 50),
+      offset: meta.offset || (params.offset || 0),
+      has_more: items.length >= (meta.limit || params.limit || 50),
     };
 
     return normalized;
@@ -223,18 +233,17 @@ export async function getModelPredictions(
       }
     );
 
-    // Normalizar respuesta: puede venir como { data, total, ... } o como array plano
+    // La API devuelve { items: [...], meta: { limit, offset } }
     const raw: any = response as any;
-    const data: ModelPrediction[] = Array.isArray(raw)
-      ? (raw as ModelPrediction[])
-      : (raw?.data as ModelPrediction[]) || [];
+    const items = raw?.items || raw?.data || (Array.isArray(raw) ? raw : []);
+    const meta = raw?.meta || {};
 
     const normalized: ReportResponse<ModelPrediction> = {
-      data,
-      total: typeof raw?.total === "number" ? raw.total : data.length,
-      limit: typeof raw?.limit === "number" ? raw.limit : (params.limit || 50),
-      offset: typeof raw?.offset === "number" ? raw.offset : (params.offset || 0),
-      has_more: typeof raw?.has_more === "boolean" ? raw.has_more : false,
+      data: items,
+      total: items.length,
+      limit: meta.limit || (params.limit || 50),
+      offset: meta.offset || (params.offset || 0),
+      has_more: items.length >= (meta.limit || params.limit || 50),
     };
 
     return normalized;

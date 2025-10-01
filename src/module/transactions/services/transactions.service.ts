@@ -30,6 +30,7 @@ function mapApiTransactionToSuspiciousTransaction(
     businessId: item.businessId.toString(),
     deviceInfo: `${item.deviceType} - ${item.browser}`,
     ipAddress: item.ipAddress,
+    fraud_event_id: item?.fraud_event_id || "",
   };
 }
 
@@ -47,6 +48,7 @@ export interface SuspiciousTransaction {
   businessId: string;
   deviceInfo: string;
   ipAddress: string;
+  fraud_event_id?: string;
 }
 
 export interface TransactionFilters {
@@ -328,13 +330,23 @@ export async function getCustomerLastMovements(
       }
     );
 
-    const data = (response.data as any) || {};
+    // La API devuelve { average_amount, items }
+    const data = Array.isArray(response) ? { items: response } : (response.data as any) || response || {};
+
+    // Mapear los items a nuestro formato esperado
+    const items = data.items || [];
+    const lastTransactions = items.map((item: any) => ({
+      id: item.id?.toString() || item.paymentId?.toString() || "",
+      amount: item.amount || 0,
+      date: item.createdAt || item.timestamp || new Date().toISOString(),
+      merchant: `Business ${item.businessId}`,
+    }));
 
     return {
-      customer_id: data.customer_id || customerId,
-      last_transactions: data.last_transactions || [],
-      average_spend: data.average_spend || 0,
-      total_transactions: data.total_transactions || 0,
+      customer_id: customerId,
+      last_transactions: lastTransactions,
+      average_spend: data.average_amount || 0,
+      total_transactions: items.length,
     };
   } catch (error) {
     console.error("Error al obtener últimos movimientos del cliente:", error);
@@ -363,13 +375,46 @@ export async function getCustomerFraudHistory(
       }
     );
 
-    const data = (response.data as any) || {};
+    // La API devuelve un array directo de transacciones fraudulentas
+    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    const fraudTransactions = Array.isArray(data) ? data : [];
+
+    // Mapear las transacciones al formato esperado
+    const mappedFraudTransactions = fraudTransactions.map((item: any) => ({
+      id: item.id?.toString() || "",
+      amount: item.amount || 0,
+      date: item.createdAt || item.timestamp || new Date().toISOString(),
+      fraud_type: item.fraudScore >= 80 
+        ? "Alto Riesgo" 
+        : item.fraudScore >= 60 
+        ? "Riesgo Medio" 
+        : "Bajo Riesgo",
+      status: item.status === 5 
+        ? "Fraude Confirmado" 
+        : item.status === 3 
+        ? "Pendiente" 
+        : item.status === 1 
+        ? "Aprobada" 
+        : "Rechazada",
+    }));
+
+    // Encontrar la fecha del último fraude
+    let lastFraudDate = "";
+    if (fraudTransactions.length > 0) {
+      // Ordenar por fecha descendente y tomar el primero
+      const sortedFrauds = [...fraudTransactions].sort((a: any, b: any) => {
+        const dateA = new Date(a.createdAt || a.timestamp).getTime();
+        const dateB = new Date(b.createdAt || b.timestamp).getTime();
+        return dateB - dateA;
+      });
+      lastFraudDate = sortedFrauds[0].createdAt || sortedFrauds[0].timestamp || "";
+    }
 
     return {
-      customer_id: data.customer_id || customerId,
-      fraud_count: data.fraud_count || 0,
-      fraud_transactions: data.fraud_transactions || [],
-      last_fraud_date: data.last_fraud_date || "",
+      customer_id: customerId,
+      fraud_count: fraudTransactions.length,
+      fraud_transactions: mappedFraudTransactions,
+      last_fraud_date: lastFraudDate,
     };
   } catch (error) {
     console.error("Error al obtener historial de fraudes del cliente:", error);
@@ -404,7 +449,25 @@ export async function getCustomerActivePaymentMethods(
         },
       }
     );
-    return (response.data as any) || [];
+
+    // La API devuelve un array directo
+    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    const paymentMethods = Array.isArray(data) ? data : [];
+
+    // Mapear al formato esperado por el componente
+    return paymentMethods.map((method: any) => {
+      // Extraer los últimos 4 dígitos del número
+      const numberStr = method.number || "";
+      const lastFour = numberStr.replace(/\s/g, "").slice(-4);
+
+      return {
+        id: method.id,
+        type: method.provider || method.typePayment || "Unknown",
+        last_four: lastFour,
+        status: method.status === 1 ? "active" : "inactive",
+        expiry_date: method.expiryDate || undefined,
+      };
+    });
   } catch (error) {
     console.error(
       "Error al obtener métodos de pago activos del cliente:",

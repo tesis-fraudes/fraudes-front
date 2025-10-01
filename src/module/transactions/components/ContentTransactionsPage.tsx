@@ -1,21 +1,51 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle, RefreshCw } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { AlertTriangle, RefreshCw, Building2 } from "lucide-react";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../../guard/hooks/useAuth";
-import TransactionFilters from "./TransactionFilters";
 import TransactionCard from "./TransactionCard";
 import ApprovalModal from "./ApprovalModal";
 import { TransactionDetailsModal } from "./TransactionDetailsModal";
 import type { SuspiciousTransaction } from "../services";
+import { getBusinessList, type Business } from "@/shared/services";
 
 export default function ContentTransactionsPage() {
   const { user } = useAuth();
-  const businessId = user?.businessId || 1; // Usar businessId del usuario o 1 por defecto
-  
+  const [businesses, setBusinesses] = useState<Business[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<number>(user?.businessId || 1);
+  const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
+
+  // Cargar lista de negocios al montar el componente
+  useEffect(() => {
+    const loadBusinesses = async () => {
+      try {
+        setIsLoadingBusinesses(true);
+        const businessList = await getBusinessList();
+        setBusinesses(businessList);
+
+        // Si el usuario tiene un businessId, usarlo por defecto
+        if (user?.businessId && businessList.some(b => b.id === user.businessId)) {
+          setSelectedBusinessId(user.businessId);
+        } else if (businessList.length > 0) {
+          // Si no hay businessId del usuario, usar el primero de la lista
+          setSelectedBusinessId(businessList[0].id);
+        }
+      } catch (error) {
+        console.error("Error al cargar negocios:", error);
+      } finally {
+        setIsLoadingBusinesses(false);
+      }
+    };
+
+    loadBusinesses();
+  }, [user?.businessId]);
+
+  const businessId = selectedBusinessId;
+
   const {
     transactions,
     isLoading,
@@ -86,10 +116,37 @@ export default function ContentTransactionsPage() {
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center justify-between">
-          <div>
+          <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">Revisión Manual</h1>
-            <div className="text-sm text-blue-600 mt-1">
-              Business ID: {businessId} {user?.businessId ? `(Usuario: ${user.name})` : '(Por defecto)'}
+
+            {/* Selector de Negocio */}
+            <div className="flex items-center gap-3 mt-3">
+              <div className="flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Negocio:</span>
+              </div>
+              <Select
+                value={selectedBusinessId.toString()}
+                onValueChange={(value) => setSelectedBusinessId(Number(value))}
+                disabled={isLoadingBusinesses}
+              >
+                <SelectTrigger className="w-[280px]">
+                  <SelectValue placeholder="Seleccione un negocio" />
+                </SelectTrigger>
+                <SelectContent>
+                  {businesses.map((business) => (
+                    <SelectItem key={business.id} value={business.id.toString()}>
+                      {business.name}
+                      {user?.businessId === business.id && " (Tu negocio)"}
+                    </SelectItem>
+                  ))}
+                  {businesses.length === 0 && !isLoadingBusinesses && (
+                    <SelectItem value="0" disabled>
+                      No hay negocios disponibles
+                    </SelectItem>
+                  )}
+                </SelectContent>
+              </Select>
             </div>
           </div>
           <Button
@@ -105,12 +162,12 @@ export default function ContentTransactionsPage() {
       </div>
 
       {/* Filtros */}
-      <TransactionFilters
+      {/* <TransactionFilters
         onFiltersChange={setFilters}
         onSearchChange={setSearchQuery}
         searchQuery={searchQuery}
         filters={filters}
-      />
+      /> */}
 
       {/* Lista de transacciones */}
       <Card>
@@ -120,8 +177,7 @@ export default function ContentTransactionsPage() {
             Transacciones Sospechosas ({totalCount})
           </CardTitle>
           <CardDescription>
-            Transacciones que requieren revisión manual
-            {totalPages > 1 && ` • Página ${currentPage} de ${totalPages}`}
+            {""}
           </CardDescription>
         </CardHeader>
         <CardContent>

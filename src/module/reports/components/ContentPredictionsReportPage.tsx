@@ -6,55 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Download, Search, Filter, Brain, BarChart3, RefreshCw } from "lucide-react";
+import { Download, Filter, Brain, BarChart3, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { getModelPredictions, exportModelPredictions, type ModelPrediction, type ReportQueryParams } from "../services";
 
 export default function ContentPredictionsReportPage() {
   const [predictions, setPredictions] = useState<ModelPrediction[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
   const [isExporting, setIsExporting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     start_date: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString().split('T')[0],
     end_date: new Date().toISOString().split('T')[0],
   });
-
-  // Agrupar predicciones por modelo (tolerante a undefined)
-  const groupedPredictions = (predictions || []).reduce((acc, prediction) => {
-    const key = `${prediction.model_name}_${prediction.model_version}`;
-    if (!acc[key]) {
-      acc[key] = {
-        model_name: prediction.model_name,
-        model_version: prediction.model_version,
-        totalPredictions: 0,
-        suspicious: 0,
-        legitimate: 0,
-        flagged: 0,
-        lastPrediction: prediction.created_at,
-      };
-    }
-    
-    acc[key].totalPredictions++;
-    if (prediction.prediction === "rejected") {
-      acc[key].suspicious++;
-    } else if (prediction.prediction === "approved") {
-      acc[key].legitimate++;
-    } else if (prediction.prediction === "flagged") {
-      acc[key].flagged++;
-    }
-    
-    if (new Date(prediction.created_at) > new Date(acc[key].lastPrediction)) {
-      acc[key].lastPrediction = prediction.created_at;
-    }
-    
-    return acc;
-  }, {} as Record<string, any>);
-
-  const filteredPredictions = Object.values(groupedPredictions).filter((prediction: any) =>
-    prediction.model_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    prediction.model_version.toLowerCase().includes(searchQuery.toLowerCase())
-  );
 
   const loadPredictions = async () => {
     setIsLoading(true);
@@ -119,17 +82,24 @@ export default function ContentPredictionsReportPage() {
     });
   };
 
-  const getSuspiciousRate = (suspicious: number, total: number) => {
-    return total > 0 ? ((suspicious / total) * 100).toFixed(1) : "0";
-  };
 
-  const totalStats = Object.values(groupedPredictions).reduce((acc: any, prediction: any) => {
-    acc.totalPredictions += prediction.totalPredictions;
-    acc.suspicious += prediction.suspicious;
-    acc.legitimate += prediction.legitimate;
-    acc.flagged += prediction.flagged;
+  // Calcular estadísticas totales
+  const totalStats = (predictions || []).reduce((acc: any, prediction: any) => {
+    acc.totalPredictions++;
+    // prediction: 0 = fraude/rechazada, 1 = legítima/aprobada
+    // class: "suspicious", "legit", "fraudulent"
+    if (prediction.prediction === 0 && prediction.class === "suspicious") {
+      acc.suspicious++;
+    } else if (prediction.class === "legit" || prediction.prediction === 1) {
+      acc.legitimate++;
+    } else if (prediction.prediction === 0) {
+      acc.rejected++;
+    }
     return acc;
-  }, { totalPredictions: 0, suspicious: 0, legitimate: 0, flagged: 0 });
+  }, { totalPredictions: 0, suspicious: 0, legitimate: 0, rejected: 0 });
+
+  // Calcular cantidad de modelos únicos
+  const uniqueModels = new Set((predictions || []).map(p => `${p.model_name}_${p.model_id}`)).size;
 
   return (
     <div className="p-6 space-y-6">
@@ -163,16 +133,7 @@ export default function ContentPredictionsReportPage() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                placeholder="Buscar por modelo o versión..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="text-sm text-gray-600 mb-1 block">Fecha inicio</label>
               <Input
@@ -200,8 +161,8 @@ export default function ContentPredictionsReportPage() {
             <div className="flex items-center gap-2">
               <Brain className="h-5 w-5 text-blue-600" />
               <div>
-                <p className="text-sm text-gray-600">Total Modelos</p>
-                <p className="text-2xl font-bold">{Object.keys(groupedPredictions).length}</p>
+                <p className="text-sm text-gray-600">Modelos Únicos</p>
+                <p className="text-2xl font-bold">{uniqueModels}</p>
               </div>
             </div>
           </CardContent>
@@ -222,12 +183,12 @@ export default function ContentPredictionsReportPage() {
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center gap-2">
-              <div className="h-5 w-5 bg-red-100 rounded-full flex items-center justify-center">
-                <div className="h-2 w-2 bg-red-600 rounded-full"></div>
+              <div className="h-5 w-5 bg-orange-100 rounded-full flex items-center justify-center">
+                <div className="h-2 w-2 bg-orange-600 rounded-full"></div>
               </div>
               <div>
-                <p className="text-sm text-gray-600">Rechazadas</p>
-                <p className="text-2xl font-bold text-red-600">
+                <p className="text-sm text-gray-600">Sospechosas</p>
+                <p className="text-2xl font-bold text-orange-600">
                   {totalStats.suspicious.toLocaleString()}
                 </p>
               </div>
@@ -254,9 +215,9 @@ export default function ContentPredictionsReportPage() {
       {/* Tabla de predicciones */}
       <Card>
         <CardHeader>
-          <CardTitle>Predicciones por Modelo</CardTitle>
+          <CardTitle>Predicciones Realizadas</CardTitle>
           <CardDescription>
-            Detalle de predicciones realizadas por cada modelo
+            Listado de todas las predicciones realizadas por los modelos
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -269,53 +230,82 @@ export default function ContentPredictionsReportPage() {
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID Predicción</TableHead>
                   <TableHead>Modelo</TableHead>
-                  <TableHead>Versión</TableHead>
-                  <TableHead className="text-center">Total</TableHead>
-                  <TableHead className="text-center">Aprobadas</TableHead>
-                  <TableHead className="text-center">Rechazadas</TableHead>
-                  <TableHead className="text-center">Marcadas</TableHead>
-                  <TableHead className="text-center">% Rechazadas</TableHead>
-                  <TableHead>Última Predicción</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Negocio</TableHead>
+                  <TableHead className="text-right">Monto</TableHead>
+                  <TableHead className="text-center">Score Fraude</TableHead>
+                  <TableHead className="text-center">Clasificación</TableHead>
+                  <TableHead>Fecha</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPredictions.length === 0 ? (
+                {predictions.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} className="text-center py-8 text-gray-500">
                       No se encontraron predicciones para el rango de fechas seleccionado
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredPredictions.map((prediction: any, index: number) => (
-                    <TableRow key={`${prediction.model_name}_${prediction.model_version}_${index}`}>
+                  predictions.map((prediction: any) => (
+                    <TableRow key={prediction.prediction_id}>
+                      <TableCell className="font-mono text-sm">
+                        #{prediction.prediction_id}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-mono">
-                          {prediction.model_name}
-                        </Badge>
+                        <div className="flex flex-col">
+                          <Badge variant="outline" className="font-mono w-fit">
+                            {prediction.model_name}
+                          </Badge>
+                          <span className="text-xs text-gray-500 mt-1">ID: {prediction.model_id}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="font-medium">{prediction.model_version}</TableCell>
-                      <TableCell className="text-center font-semibold">
-                        {prediction.totalPredictions.toLocaleString()}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{prediction.customer_name}</span>
+                          <span className="text-xs text-gray-500">ID: {prediction.customer_id}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-center text-green-600 font-semibold">
-                        {prediction.legitimate.toLocaleString()}
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-sm">{prediction.trade_name || prediction.company_name}</span>
+                          <span className="text-xs text-gray-500">{prediction.company_name}</span>
+                        </div>
                       </TableCell>
-                      <TableCell className="text-center text-red-600 font-semibold">
-                        {prediction.suspicious.toLocaleString()}
-                      </TableCell>
-                      <TableCell className="text-center text-orange-600 font-semibold">
-                        {prediction.flagged.toLocaleString()}
+                      <TableCell className="text-right font-semibold">
+                        {new Intl.NumberFormat('es-MX', {
+                          style: 'currency',
+                          currency: prediction.currency || 'USD'
+                        }).format(prediction.amount)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge 
-                          variant={parseFloat(getSuspiciousRate(prediction.suspicious, prediction.totalPredictions)) > 10 ? "destructive" : "secondary"}
+                          variant={prediction.fraud_score >= 80 ? "destructive" : prediction.fraud_score >= 60 ? "default" : "secondary"}
                         >
-                          {getSuspiciousRate(prediction.suspicious, prediction.totalPredictions)}%
+                          {prediction.fraud_score}%
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge 
+                          variant={
+                            prediction.class === "suspicious" ? "default" : 
+                            prediction.class === "legit" ? "secondary" : 
+                            "destructive"
+                          }
+                          className={
+                            prediction.class === "suspicious" ? "bg-orange-100 text-orange-700" : 
+                            prediction.class === "legit" ? "bg-green-100 text-green-700" : 
+                            ""
+                          }
+                        >
+                          {prediction.class === "suspicious" ? "Sospechosa" : 
+                           prediction.class === "legit" ? "Legítima" : 
+                           "Fraudulenta"}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-gray-600">
-                        {formatDate(prediction.lastPrediction)}
+                        {formatDate(prediction.created_at)}
                       </TableCell>
                     </TableRow>
                   ))
