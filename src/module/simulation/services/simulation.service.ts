@@ -119,7 +119,16 @@ export async function getBusinesses(): Promise<Business[]> {
         accept: "*/*",
       },
     });
-    return (response.data as any[]) || [];
+    
+    // La API devuelve un array directo
+    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name || `Business ${item.id}`,
+      country: item.country || item.countryCode || "",
+      status: item.status === 1 ? "active" : "inactive",
+    }));
   } catch (error) {
     console.error("Error al obtener negocios:", error);
     return [];
@@ -133,7 +142,16 @@ export async function getCustomers(): Promise<Customer[]> {
         accept: "*/*",
       },
     });
-    return (response.data as any[]) || [];
+    
+    // La API devuelve un array directo
+    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    
+    return data.map((item: any) => ({
+      id: item.id,
+      name: item.name || item.fullName || `Cliente ${item.id}`,
+      email: item.email || "",
+      status: item.status === 1 ? "active" : "inactive",
+    }));
   } catch (error) {
     console.error("Error al obtener clientes:", error);
     return [];
@@ -150,7 +168,21 @@ export async function getCustomerActivePaymentMethods(customerId: number): Promi
         },
       }
     );
-    return (response.data as any[]) || [];
+    
+    // La API devuelve un array directo
+    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    
+    return data.map((item: any) => {
+      const numberStr = item.number || "";
+      const lastFour = numberStr.replace(/\s/g, "").slice(-4);
+      
+      return {
+        id: item.id,
+        type: item.provider || item.typePayment || "Unknown",
+        last_four: lastFour,
+        status: item.status === 1 ? "active" : "inactive",
+      };
+    });
   } catch (error) {
     console.error("Error al obtener métodos de pago activos:", error);
     return [];
@@ -167,7 +199,38 @@ export async function getConfigParameters(parameterType: string): Promise<Config
         },
       }
     );
-    return (response.data as any[]) || [];
+    
+    // La API puede devolver: array directo, {data: array}, {items: array}, o {clave, valor}[]
+    let data: any[] = [];
+    const rawResponse = response as any;
+    
+    if (Array.isArray(rawResponse)) {
+      data = rawResponse;
+    } else if (Array.isArray(rawResponse?.data)) {
+      data = rawResponse.data;
+    } else if (Array.isArray(rawResponse?.items)) {
+      data = rawResponse.items;
+    } else if (rawResponse && typeof rawResponse === 'object') {
+      // Si es un objeto único, convertirlo a array
+      data = [rawResponse];
+    }
+    
+    // Mapear los datos manejando diferentes formatos
+    const mapped = data.map((item: any, index: number) => {
+      // Manejar formato {clave, valor} o {name, value} o directo
+      const paramValue = item.valor || item.value || item.clave || item.name || item;
+      const paramName = item.valor || item.name || item.label || item.clave || paramValue;
+      
+      return {
+        id: item.id?.toString() || `${parameterType}_${index}`,
+        name: paramName,
+        value: typeof paramValue === 'string' ? paramValue : String(paramValue),
+        description: item.descripcion || item.description,
+      };
+    });
+    
+    
+    return mapped;
   } catch (error) {
     console.error(`Error al obtener parámetros de configuración para ${parameterType}:`, error);
     return [];

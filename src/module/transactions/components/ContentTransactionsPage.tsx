@@ -50,15 +50,11 @@ export default function ContentTransactionsPage() {
     transactions,
     isLoading,
     isProcessing,
-    searchQuery,
-    filters,
     currentPage,
     totalPages,
     totalCount,
     isDetailsModalOpen,
     selectedTransaction,
-    setSearchQuery,
-    setFilters,
     setCurrentPage,
     handleApprove,
     handleReject,
@@ -134,14 +130,14 @@ export default function ContentTransactionsPage() {
                   <SelectValue placeholder="Seleccione un negocio" />
                 </SelectTrigger>
                 <SelectContent>
-                  {businesses.map((business) => (
-                    <SelectItem key={business.id} value={business.id.toString()}>
+                  {businesses.map((business, idx) => (
+                    <SelectItem key={`business_selector_${business.id}_${idx}`} value={business.id.toString()}>
                       {business.name}
                       {user?.businessId === business.id && " (Tu negocio)"}
                     </SelectItem>
                   ))}
                   {businesses.length === 0 && !isLoadingBusinesses && (
-                    <SelectItem value="0" disabled>
+                    <SelectItem key="no-business" value="999" disabled>
                       No hay negocios disponibles
                     </SelectItem>
                   )}
@@ -206,9 +202,7 @@ export default function ContentTransactionsPage() {
                 No hay transacciones sospechosas
               </h3>
               <p className="text-gray-500">
-                {searchQuery || Object.keys(filters).length > 0
-                  ? "No se encontraron transacciones con los filtros aplicados."
-                  : "No hay transacciones pendientes de revisión en este momento."}
+                No hay transacciones pendientes de revisión en este momento.
               </p>
             </div>
           ) : (
