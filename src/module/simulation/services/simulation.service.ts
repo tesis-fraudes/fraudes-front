@@ -1,5 +1,6 @@
 // MÓDULO: SIMULADOR DE COMPRA (Combos y selección)
 import { apiService } from "@/shared/services";
+import type { ApiError } from "@/shared/services/api.service";
 
 export interface SimulationConfig {
   endpointUrl: string;
@@ -78,7 +79,7 @@ export async function getSimulationModels(): Promise<Array<{ id: string; name: s
     });
     return (response.data as any[]) || [];
   } catch (error) {
-    console.error("Error al obtener modelos de simulación:", error);
+    logApiError("Error al obtener modelos de simulación", error);
     return [];
   }
 }
@@ -125,12 +126,12 @@ export async function getBusinesses(): Promise<Business[]> {
     
     return data.map((item: any) => ({
       id: item.id,
-      name: item.name || `Business ${item.id}`,
+      name: item.companyName || `Business ${item.id}`,
       country: item.country || item.countryCode || "",
       status: item.status === 1 ? "active" : "inactive",
     }));
   } catch (error) {
-    console.error("Error al obtener negocios:", error);
+    logApiError("Error al obtener negocios", error);
     return [];
   }
 }
@@ -153,7 +154,7 @@ export async function getCustomers(): Promise<Customer[]> {
       status: item.status === 1 ? "active" : "inactive",
     }));
   } catch (error) {
-    console.error("Error al obtener clientes:", error);
+    logApiError("Error al obtener clientes", error);
     return [];
   }
 }
@@ -184,7 +185,7 @@ export async function getCustomerActivePaymentMethods(customerId: number): Promi
       };
     });
   } catch (error) {
-    console.error("Error al obtener métodos de pago activos:", error);
+    logApiError("Error al obtener métodos de pago activos", error);
     return [];
   }
 }
@@ -232,7 +233,7 @@ export async function getConfigParameters(parameterType: string): Promise<Config
     
     return mapped;
   } catch (error) {
-    console.error(`Error al obtener parámetros de configuración para ${parameterType}:`, error);
+    logApiError(`Error al obtener parámetros de configuración para ${parameterType}`, error);
     return [];
   }
 }
@@ -259,7 +260,7 @@ export async function getAllConfigParameters(): Promise<{
       paymentMethods,
     };
   } catch (error) {
-    console.error("Error al obtener todos los parámetros de configuración:", error);
+    logApiError("Error al obtener todos los parámetros de configuración", error);
     return {
       browsers: [],
       deviceTypes: [],
@@ -278,7 +279,19 @@ export async function validateSimulationConfig(config: SimulationConfig): Promis
     });
     return response.ok;
   } catch (error) {
-    console.error("Error validando configuración de simulación:", error);
+    logApiError("Error validando configuración de simulación", error);
     return false;
   }
+}
+
+// Helper para loggear errores de forma consistente y evitar "{}" en consola
+function logApiError(context: string, error: unknown): void {
+  const e = error as Partial<ApiError> & { response?: any };
+  const payload = {
+    message: e?.message ?? "Error desconocido",
+    status: e?.status,
+    code: e?.code,
+  };
+  // Mostrar como objeto expandible y además una línea legible
+  console.error(`${context}:`, payload);
 }

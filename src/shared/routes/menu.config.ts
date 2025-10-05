@@ -39,7 +39,7 @@ export const menuData: MenuSection[] = [
       },
       {
         id: "transactions",
-        label: "Transacciones",
+        label: "Revisión Manual de transacciones sospechosas",
         href: "/transactions",
         icon: CreditCard,
       },

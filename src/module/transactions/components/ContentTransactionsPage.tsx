@@ -113,7 +113,7 @@ export default function ContentTransactionsPage() {
       <div className="mb-6">
         <div className="flex items-center justify-between">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900">Revisión Manual</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Revisión Manual de transacciones sospechosas</h1>
 
             {/* Selector de Negocio */}
             <div className="flex items-center gap-3 mt-3">

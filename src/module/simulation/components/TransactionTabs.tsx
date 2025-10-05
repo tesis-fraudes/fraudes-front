@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { TransactionForm, type TransactionFormValues } from "./TransactionForm";
 import { useSimulationStore } from "../store/simulation.store";
 
-export function TransactionTabs({ onSimulate, onChangeValues }: { onSimulate: (values: TransactionFormValues) => void; onChangeValues?: (values: TransactionFormValues) => void }) {
+export function TransactionTabs({ onSimulate, onChangeValues, shouldReset }: { onSimulate: (values: TransactionFormValues) => void; onChangeValues?: (values: TransactionFormValues) => void; shouldReset?: boolean }) {
   const { form } = useSimulationStore();
 
   const copyToClipboard = async () => {
@@ -25,7 +25,7 @@ export function TransactionTabs({ onSimulate, onChangeValues }: { onSimulate: (v
       </TabsList>
 
       <TabsContent value="form">
-        <TransactionForm onSimulate={onSimulate as any} onChangeValues={onChangeValues} />
+        <TransactionForm onSimulate={onSimulate as any} onChangeValues={onChangeValues} shouldReset={shouldReset} />
       </TabsContent>
 
       <TabsContent value="json">
@@ -36,7 +36,7 @@ export function TransactionTabs({ onSimulate, onChangeValues }: { onSimulate: (v
               <Button size="sm" variant="outline" className="bg-transparent" onClick={copyToClipboard}>Copiar</Button>
             </div>
             <pre className="bg-gray-900 text-gray-100 p-4 rounded-b-md overflow-auto text-sm max-h-[480px]">
-{JSON.stringify(form, null, 2)}
+              {JSON.stringify(form, null, 2)}
             </pre>
           </CardContent>
         </Card>

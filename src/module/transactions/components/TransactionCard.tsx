@@ -77,7 +77,6 @@ export default function TransactionCard({
           {/* Header con ID, badges y estado */}
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-lg">{transaction.id}</span>
-            {getRiskBadge(transaction.riskScore)}
             {getStatusBadge(transaction.status)}
             <div className="flex items-center gap-1 text-sm text-gray-500">
               <Clock className="h-4 w-4" />
@@ -114,12 +113,9 @@ export default function TransactionCard({
 
           {/* Información adicional */}
           <div className="flex items-center gap-4 text-sm flex-wrap">
+          
             <div className="flex items-center gap-2">
-              <span className="text-gray-500">Tipo de Fraude:</span>
-              <span className="text-orange-600 font-medium">{transaction.fraudType}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">Riesgo:</span>
+              <span className="text-gray-500">Score:</span>
               <span className="font-medium">{transaction.riskScore}%</span>
             </div>
             {transaction.customerId && (
