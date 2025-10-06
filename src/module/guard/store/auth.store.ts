@@ -25,16 +25,25 @@ export const useAuthStore = create<AuthStore>()(
 
       // Actions
       login: async (credentials) => {
+        console.log("🔐 Store: Iniciando login...");
         set({ isLoading: true });
         try {
+          console.log("📞 Store: Llamando a authService.login...");
           const { user, token } = await authService.login(credentials);
+          console.log("✅ Store: Login exitoso, actualizando estado...");
+          console.log("👤 Usuario:", user);
+          console.log("🎫 Token:", token);
+          
           set({
             user,
             token,
             isAuthenticated: true,
             isLoading: false,
           });
+          
+          console.log("🎉 Store: Estado actualizado correctamente");
         } catch (error) {
+          console.error("❌ Store: Error en login:", error);
           set({ isLoading: false });
           throw error;
         }

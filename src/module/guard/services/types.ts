@@ -51,3 +51,34 @@ export interface VerifyTokenResponse {
     permissions: Permission[];
   };
 }
+
+// Nuevos tipos para los endpoints reales
+export interface Role {
+  id: number;
+  name: string;
+  description?: string;
+}
+
+export interface UserData {
+  id: number;
+  email: string;
+  name: string;
+  role_id: number;
+  role_name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface LoginRequestReal {
+  email: string;
+  password: string;
+  role_id: number;
+}
+
+export interface LoginResponseReal {
+  success: boolean;
+  message: string;
+  user_id?: number;
+  user?: UserData;
+  token?: string;
+}

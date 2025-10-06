@@ -6,10 +6,15 @@ import type {
   RegisterRequest,
   RegisterResponse,
   VerifyTokenResponse,
+  Role,
+  UserData,
+  LoginRequestReal,
+  LoginResponseReal,
 } from "./types";
 
 class AuthService {
-  private isMock = true; // Siempre usar mock para SPA estática
+  private isMock = false; // Cambiar a false para usar endpoints reales
+  private baseUrl = "https://fd6bat803l.execute-api.us-east-1.amazonaws.com";
 
   // Simulación de API - reemplazar con llamadas reales
   private mockApi = {
@@ -133,14 +138,142 @@ class AuthService {
     }
   }
 
+  // Métodos para endpoints reales
+  async getRoles(): Promise<Role[]> {
+    try {
+      const response = await fetch(`${this.baseUrl}/auth/roles`);
+      if (!response.ok) {
+        throw new Error(`Error al obtener roles: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Error al obtener roles:", error);
+      throw error;
+    }
+  }
+
+  async loginReal(credentials: LoginRequestReal): Promise<LoginResponseReal> {
+    try {
+      console.log("🔐 Intentando login con credenciales:", credentials);
+      
+      const response = await fetch(`${this.baseUrl}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(credentials),
+      });
+
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Error al iniciar sesión");
+      }
+
+      // El API devuelve {ok: true, user_id: 1} en lugar de {success: true, user: {...}}
+      return {
+        success: data.ok || false,
+        message: data.message || "Login exitoso",
+        user_id: data.user_id,
+      };
+    } catch (error) {
+      console.error("❌ Error en login:", error);
+      throw error;
+    }
+  }
+
+  async getUserData(userId: number): Promise<UserData> {
+    try {
+      const response = await fetch(`${this.baseUrl}/auth/user/${userId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Error al obtener datos del usuario: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error("Error al obtener datos del usuario:", error);
+      throw error;
+    }
+  }
+
+  // Métodos de utilidad para mapear roles
+  private getRoleIdFromUserRole(userRole: UserRole): number {
+    const roleMapping: Partial<Record<UserRole, number>> = {
+      [UserRole.ADMIN]: 1,        // Administrador
+      [UserRole.ANALISTA]: 2,     // Analista
+      [UserRole.GERENTE]: 3,      // Gerencia
+    };
+    return roleMapping[userRole] || 2; // Default a ANALISTA
+  }
+
+  private getUserRoleFromRoleId(roleId: number): UserRole {
+    const roleMapping: Record<number, UserRole> = {
+      1: UserRole.ADMIN,        // Administrador
+      2: UserRole.ANALISTA,     // Analista
+      3: UserRole.GERENTE,      // Gerencia
+    };
+    return roleMapping[roleId] || UserRole.ANALISTA;
+  }
+
   // Métodos públicos
   async login(credentials: LoginRequest): Promise<LoginResponse> {
+    console.log("🚀 Iniciando proceso de login...");
+    console.log("🔧 isMock:", this.isMock);
+    console.log("📝 Credenciales recibidas:", credentials);
+    
     if (this.isMock) {
+      console.log("🎭 Usando API mock");
       return this.mockApi.login(credentials);
     }
 
-    const response = await this.makeRequest<LoginResponse>("/auth/login", "POST", credentials);
-    return response.data;
+    // Convertir credenciales del formato mock al formato real
+    const roleId = this.getRoleIdFromUserRole(credentials.role || UserRole.ANALISTA);
+    const realCredentials: LoginRequestReal = {
+      email: credentials.email,
+      password: credentials.password,
+      role_id: roleId,
+    };
+
+    console.log("🔄 Credenciales convertidas:", realCredentials);
+
+    try {
+      const response = await this.loginReal(realCredentials);
+      
+      if (!response.success || !response.user_id) {
+        throw new Error(response.message || "Error al iniciar sesión");
+      }
+
+      // Obtener datos completos del usuario
+      const userData = await this.getUserData(response.user_id);
+
+      // Convertir respuesta real al formato esperado por la aplicación
+      const userRole = this.getUserRoleFromRoleId(roleId);
+      console.log("👤 Rol mapeado:", userRole);
+      
+      const result = {
+        user: {
+          id: userData.id.toString(),
+          email: userData.email,
+          name: userData.name,
+          role: userRole,
+          permissions: ROLE_PERMISSIONS[userRole],
+        },
+        token: response.token || `real-token-${Date.now()}`,
+      };
+      
+      console.log("🎉 Login exitoso, resultado final:", result);
+      return result;
+    } catch (error) {
+      console.error("💥 Error en login:", error);
+      throw error;
+    }
   }
 
   async register(data: RegisterRequest): Promise<RegisterResponse> {

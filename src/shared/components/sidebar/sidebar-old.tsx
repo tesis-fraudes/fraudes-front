@@ -4,7 +4,8 @@ import { ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { cn } from "@/shared/lib/utils";
-import { type MenuItem, menuData, type SubMenuItem } from "@/shared/routes";
+import type { MenuItem, SubMenuItem } from "@/shared/routes";
+import { useFilteredMenu } from "@/shared/hooks/useFilteredMenu";
 
 type MenuState = "full" | "collapsed" | "hidden";
 
@@ -15,6 +16,9 @@ export default function Sidebar() {
   const [previousDesktopState, setPreviousDesktopState] = useState<MenuState>("full");
   const [isMobile, setIsMobile] = useState(false);
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+  
+  // Usar el menú filtrado basado en permisos
+  const filteredMenuData = useFilteredMenu();
 
   // Cycle through menu states: full -> collapsed -> hidden -> full
   const toggleMenuState = () => {
@@ -248,7 +252,7 @@ export default function Sidebar() {
               }}
             >
               <div className="space-y-6">
-                {menuData.map((section) => (
+                {filteredMenuData.map((section) => (
                   <div key={section.id}>
                     <div className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider sidebar-section-label text-gray-400">
                       {section.label}
@@ -324,7 +328,7 @@ export default function Sidebar() {
             }}
           >
             <div className="space-y-6">
-              {menuData.map((section) => (
+              {filteredMenuData.map((section) => (
                 <div key={section.id}>
                   {showText && (
                     <div className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider sidebar-section-label transition-opacity duration-200 text-gray-400">

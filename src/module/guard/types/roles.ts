@@ -28,36 +28,50 @@ export enum Permission {
   ADMIN_VIEW = "admin:view",
   ADMIN_MANAGE_ROLES = "admin:manage_roles",
   ADMIN_MANAGE_PERMISSIONS = "admin:manage_permissions",
+
+  // Transacciones
+  TRANSACTIONS_VIEW = "transactions:view",
+  TRANSACTIONS_MANUAL_REVIEW = "transactions:manual_review",
+
+  // Simulación
+  SIMULATION_VIEW = "simulation:view",
+  SIMULATION_RUN = "simulation:run",
+
+  // Reportes
+  REPORTS_VIEW = "reports:view",
+  REPORTS_PREDICTIONS = "reports:predictions",
+  REPORTS_APPROVED = "reports:approved",
+  REPORTS_REJECTED = "reports:rejected",
 }
 
 // Mapeo de roles a permisos
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.ANALISTA]: [
-    Permission.DASHBOARD_VIEW,
-    Permission.MODEL_VIEW,
-  ],
-
-  [UserRole.GERENTE]: [
-    Permission.DASHBOARD_VIEW,
-    Permission.MODEL_VIEW,
-    Permission.MODEL_CREATE,
-    Permission.MODEL_ACTIVATE,
-    Permission.MODEL_TRAIN,
-    Permission.SETTINGS_VIEW,
-  ],
-
-  [UserRole.ADMIN]: [
-    Permission.DASHBOARD_VIEW,
-    Permission.SETTINGS_VIEW,
-    Permission.SETTINGS_EDIT,
+    // Acceso al mantenimiento de modelos
     Permission.MODEL_VIEW,
     Permission.MODEL_CREATE,
     Permission.MODEL_EDIT,
-    Permission.MODEL_DELETE,
-    Permission.MODEL_ACTIVATE,
     Permission.MODEL_TRAIN,
     Permission.MODEL_CONFIGURE,
-    Permission.ADMIN_VIEW,
+    // Puede gestionar transacciones manuales
+    Permission.TRANSACTIONS_VIEW,
+    Permission.TRANSACTIONS_MANUAL_REVIEW,
+    // Tiene acceso al simulador
+    Permission.SIMULATION_VIEW,
+    Permission.SIMULATION_RUN,
+  ],
+
+  [UserRole.GERENTE]: [
+    // Solo acceso a reportes y paneles de resultados
+    Permission.REPORTS_VIEW,
+    Permission.REPORTS_PREDICTIONS,
+    Permission.REPORTS_APPROVED,
+    Permission.REPORTS_REJECTED,
+  ],
+
+  [UserRole.ADMIN]: [
+    // Acceso total al sistema - puede visualizar, crear, editar y eliminar cualquier módulo
+    ...Object.values(Permission),
   ],
 
   [UserRole.SUPER_ADMIN]: [
@@ -69,18 +83,18 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
 // Configuración de roles para el frontend
 export const USER_ROLES_CONFIG = {
   [UserRole.ANALISTA]: {
-    label: "🔍 Analista de Fraude",
-    description: "Puede ver y analizar datos del sistema",
+    label: "🔍 Analista",
+    description: "Mantenimiento de modelos, gestión de transacciones manuales y simulador",
     color: "blue",
   },
   [UserRole.GERENTE]: {
-    label: "👔 Gerente/Supervisor",
-    description: "Puede gestionar modelos de IA y configuraciones del sistema",
+    label: "👔 Gerencia",
+    description: "Acceso a reportes y paneles de resultados (solo lectura)",
     color: "green",
   },
   [UserRole.ADMIN]: {
     label: "⚙️ Administrador",
-    description: "Acceso completo al sistema y configuración",
+    description: "Acceso total al sistema - puede visualizar, crear, editar y eliminar cualquier módulo",
     color: "purple",
   },
   [UserRole.SUPER_ADMIN]: {

@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, Settings, User } from "lucide-react";
+import { ChevronDown, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar";
 import { Button } from "@/shared/ui/button";
 import {
@@ -16,8 +16,6 @@ interface UserProfileProps {
   userName?: string;
   userRole?: string;
   avatarSrc?: string;
-  onProfileClick?: () => void;
-  onSettingsClick?: () => void;
   onSignOut?: () => void;
 }
 
@@ -25,8 +23,6 @@ export default function UserProfile({
   userName = "John Doe",
   userRole = "Administrator",
   avatarSrc = "/placeholder.svg?height=32&width=32",
-  onProfileClick,
-  onSettingsClick,
   onSignOut,
 }: UserProfileProps) {
   return (
@@ -48,15 +44,6 @@ export default function UserProfile({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
         <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onProfileClick}>
-          <User className="mr-2 h-4 w-4" />
-          Perfil
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={onSettingsClick}>
-          <Settings className="mr-2 h-4 w-4" />
-          Configuración
-        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-red-600" onClick={onSignOut}>
           Cerrar Sesión

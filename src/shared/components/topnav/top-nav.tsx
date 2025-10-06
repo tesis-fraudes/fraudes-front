@@ -69,8 +69,6 @@ export default function TopNav() {
         <UserProfile
           userName={user?.name || "Usuario"}
           userRole={user?.role === "admin" ? "Administrador" : "Usuario"}
-          onProfileClick={() => console.log("Ir a perfil")}
-          onSettingsClick={() => console.log("Ir a configuración")}
           onSignOut={handleSignOut}
           avatarSrc={user?.email ? generateAvatarUrl(user.email) : undefined}
         />

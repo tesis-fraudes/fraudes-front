@@ -2,10 +2,10 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { PublicRoute, USER_ROLES_CONFIG, UserRole, useAuth } from "@/module/guard";
+import { useRoles } from "@/module/guard/hooks/useRoles";
 import { type LoginFormData, loginSchema } from "@/module/guard/schemas/auth.schema";
 import { Button } from "@/shared/ui/button";
 import { Checkbox } from "@/shared/ui/checkbox";
@@ -18,6 +18,17 @@ function SignInForm() {
   const [error, setError] = useState("");
   const [role, setRole] = useState<UserRole>(UserRole.ANALISTA);
   const { login, isLoading } = useAuth();
+  const { roles, isLoading: isLoadingRoles, error: rolesError } = useRoles();
+
+  // Función para mapear role_id a UserRole
+  const getUserRoleFromRoleId = (roleId: number): UserRole => {
+    const roleMapping: Record<number, UserRole> = {
+      1: UserRole.ADMIN,        // Administrador
+      2: UserRole.ANALISTA,     // Analista
+      3: UserRole.GERENTE,      // Gerencia
+    };
+    return roleMapping[roleId] || UserRole.ANALISTA;
+  };
 
   const {
     register,
@@ -26,22 +37,27 @@ function SignInForm() {
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: "admin@apuestatotal.com",
-      password: "admin123",
+      email: "rodolfo.pena@gmail.com",
+      password: "123456",
       rememberMe: false,
     },
   });
 
   const onSubmit = async (data: LoginFormData) => {
+    console.log("📝 Formulario enviado:", data);
+    console.log("👤 Rol seleccionado:", role);
     setError("");
 
     try {
+      console.log("🚀 Llamando a login...");
       await login({
         email: data.email,
         password: data.password,
         role: role,
       });
+      console.log("✅ Login completado exitosamente");
     } catch (err) {
+      console.error("❌ Error en login:", err);
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     }
   };
@@ -120,11 +136,24 @@ function SignInForm() {
                       <SelectValue placeholder="Selecciona tu rol" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(USER_ROLES_CONFIG).map(([roleKey, config]) => (
-                        <SelectItem key={roleKey} value={roleKey as UserRole}>
-                          {config.label}
+                      {isLoadingRoles ? (
+                        <SelectItem value="loading" disabled>
+                          Cargando roles...
                         </SelectItem>
-                      ))}
+                      ) : rolesError ? (
+                        <SelectItem value="error" disabled>
+                          Error al cargar roles
+                        </SelectItem>
+                      ) : (
+                        roles.map((roleData) => {
+                          const userRole = getUserRoleFromRoleId(roleData.id);
+                          return (
+                            <SelectItem key={roleData.id} value={userRole}>
+                              {roleData.name}
+                            </SelectItem>
+                          );
+                        })
+                      )}
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-muted-foreground">
@@ -141,12 +170,6 @@ function SignInForm() {
                   Recordarme
                 </Label>
               </div>
-              <Link
-                href="/auth/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                ¿Olvidaste tu contraseña?
-              </Link>
             </div>
 
             <Button type="submit" className="w-full" disabled={isLoading || isSubmitting}>
