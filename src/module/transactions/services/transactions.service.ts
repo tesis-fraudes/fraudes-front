@@ -242,7 +242,7 @@ export async function getTransactionStatisticsSearch(businessId: number = 0, cus
     // Por ahora, calcular estadísticas basadas en las transacciones existentes
     // En el futuro, esto podría ser un endpoint específico de estadísticas
     const response = await apiService.post(
-      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId}/suspicious`,
+      `${ENV.API_URL_TRANSACTIONS}/transaction/suspicious/search`,
       {
         business_id: businessId,
         customer_id: customerId,
