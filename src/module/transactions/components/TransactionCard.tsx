@@ -21,8 +21,8 @@ export default function TransactionCard({
   isLoading = false,
 }: TransactionCardProps) {
   const getRiskBadge = (score: number) => {
-    if (score >= 80) return <Badge variant="destructive">Alto Riesgo</Badge>;
-    if (score >= 60) return <Badge variant="secondary">Riesgo Medio</Badge>;
+    if (score >=75) return <Badge variant="destructive">Alto Riesgo</Badge>;
+    if (score >= 50) return <Badge variant="secondary">Riesgo Medio</Badge>;
     return <Badge variant="default">Bajo Riesgo</Badge>;
   };
 
@@ -90,7 +90,7 @@ export default function TransactionCard({
               <div className="flex items-center gap-2">
                 <Building className="h-4 w-4 text-gray-400" />
                 <span className="text-gray-500">Comercio:</span>
-                <span className="font-medium">{transaction.merchant}</span>
+                <span className="font-medium">{transaction.business.tradeName}</span>
               </div>
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-gray-400" />

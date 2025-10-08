@@ -49,6 +49,9 @@ export interface SuspiciousTransaction {
   deviceInfo: string;
   ipAddress: string;
   fraud_event_id?: string;
+  business: object & {
+    tradeName?: string;
+  };
 }
 
 export interface TransactionFilters {
@@ -223,6 +226,78 @@ export async function rejectTransaction(
   }
 }
 
+export async function getTransactionStatisticsSearch(businessId: number = 0, customerId = 0, transactionId = 0): Promise<{
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  highRisk: number;
+  mediumRisk: number;
+  lowRisk: number;
+}> {
+  try {
+    // Por ahora, calcular estadísticas basadas en las transacciones existentes
+    // En el futuro, esto podría ser un endpoint específico de estadísticas
+    const response = await apiService.post(
+      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId}/suspicious`,
+      {
+        business_id: businessId,
+        customer_id: customerId,
+        transaction_id: transactionId,
+      },
+      {
+        headers: {
+          accept: "*/*",
+        },
+      }
+    );
+
+    // La API devuelve el array directamente en response, no en response.data
+    const data = Array.isArray(response) ? response : (response.data as any) || {};
+
+    // Asegurar que transactions sea un array y mapear los datos
+    let transactions = [];
+    if (Array.isArray(data)) {
+      // Mapear los datos de la API real al formato esperado
+      transactions = data.map(mapApiTransactionToSuspiciousTransaction);
+    } else if (Array.isArray(data.transactions)) {
+      transactions = data.transactions;
+    } else if (data && typeof data === "object") {
+      // Si data es un objeto pero no tiene transactions, intentar usar data directamente
+      transactions = [data];
+    }
+
+    // Calcular estadísticas basadas en las transacciones
+    const stats = {
+      total: transactions.length,
+      pending: transactions.filter((t: any) => t.status === "pendiente").length,
+      approved: transactions.filter((t: any) => t.status === "aprobada").length,
+      rejected: transactions.filter((t: any) => t.status === "rechazada")
+        .length,
+      highRisk: transactions.filter((t: any) => t.riskScore >= 75).length,
+      mediumRisk: transactions.filter(
+        (t: any) => t.riskScore >= 51 && t.riskScore < 75
+      ).length,
+      lowRisk: transactions.filter((t: any) => t.riskScore < 51).length,
+    };
+
+    return stats;
+  } catch (error) {
+    console.error("Error al obtener estadísticas de transacciones:", error);
+
+    // Devolver estadísticas vacías en caso de error
+    return {
+      total: 0,
+      pending: 0,
+      approved: 0,
+      rejected: 0,
+      highRisk: 0,
+      mediumRisk: 0,
+      lowRisk: 0,
+    };
+  }
+}
+
 export async function getTransactionStatistics(businessId: number = 1): Promise<{
   total: number;
   pending: number;
@@ -266,11 +341,11 @@ export async function getTransactionStatistics(businessId: number = 1): Promise<
       approved: transactions.filter((t: any) => t.status === "aprobada").length,
       rejected: transactions.filter((t: any) => t.status === "rechazada")
         .length,
-      highRisk: transactions.filter((t: any) => t.riskScore >= 80).length,
+      highRisk: transactions.filter((t: any) => t.riskScore >= 75).length,
       mediumRisk: transactions.filter(
-        (t: any) => t.riskScore >= 60 && t.riskScore < 80
+        (t: any) => t.riskScore >= 51 && t.riskScore < 75
       ).length,
-      lowRisk: transactions.filter((t: any) => t.riskScore < 60).length,
+      lowRisk: transactions.filter((t: any) => t.riskScore < 51).length,
     };
 
     return stats;
@@ -322,7 +397,7 @@ export async function getCustomerLastMovements(
 ): Promise<CustomerLastMovements> {
   try {
     const response = await apiService.get(
-      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId}/${customerId}/last`,
+      `${ENV.API_URL_TRANSACTIONS}/transaction/customer/${customerId}/last`,
       {
         headers: {
           accept: "*/*",
@@ -367,7 +442,7 @@ export async function getCustomerFraudHistory(
 ): Promise<CustomerFraudHistory> {
   try {
     const response = await apiService.get(
-      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId}/${customerId}/frauds`,
+      `${ENV.API_URL_TRANSACTIONS}/transaction/customer/${customerId}/frauds`,
       {
         headers: {
           accept: "*/*",
@@ -384,9 +459,9 @@ export async function getCustomerFraudHistory(
       id: item.id?.toString() || "",
       amount: item.amount || 0,
       date: item.createdAt || item.timestamp || new Date().toISOString(),
-      fraud_type: item.fraudScore >= 80 
+      fraud_type: item.fraudScore >= 75 
         ? "Alto Riesgo" 
-        : item.fraudScore >= 60 
+        : item.fraudScore >= 50 
         ? "Riesgo Medio" 
         : "Bajo Riesgo",
       status: item.status === 5 

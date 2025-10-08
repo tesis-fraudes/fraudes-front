@@ -119,7 +119,7 @@ export default function ContentTransactionsPage() {
             <div className="flex items-center gap-3 mt-3">
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Negocio:</span>
+                <span className="text-sm font-medium text-gray-700">Comercio :</span>
               </div>
               <Select
                 value={selectedBusinessId.toString()}
@@ -127,7 +127,7 @@ export default function ContentTransactionsPage() {
                 disabled={isLoadingBusinesses}
               >
                 <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Seleccione un negocio" />
+                  <SelectValue placeholder="Seleccione un comercio" />
                 </SelectTrigger>
                 <SelectContent>
                   {businesses.map((business, idx) => (

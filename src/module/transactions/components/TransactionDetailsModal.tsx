@@ -99,8 +99,8 @@ export function TransactionDetailsModal({
   };
 
   const getRiskColor = (riskScore: number) => {
-    if (riskScore >= 80) return "bg-red-100 text-red-800 border-red-200";
-    if (riskScore >= 60) return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    if (riskScore >= 75) return "bg-red-100 text-red-800 border-red-200";
+    if (riskScore >= 50) return "bg-yellow-100 text-yellow-800 border-yellow-200";
     return "bg-green-100 text-green-800 border-green-200";
   };
 
@@ -255,7 +255,7 @@ export function TransactionDetailsModal({
                               className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100"
                             >
                               <div className="flex-1">
-                                <p className="font-medium text-sm">{tx.merchant}</p>
+                                <p className="font-medium text-sm">{tx.business.tradeName}</p>
                                 <p className="text-xs text-gray-500">
                                   {new Date(tx.date).toLocaleString('es-MX')}
                                 </p>
