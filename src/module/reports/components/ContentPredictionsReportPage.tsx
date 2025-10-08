@@ -281,7 +281,7 @@ export default function ContentPredictionsReportPage() {
                       </TableCell>
                       <TableCell className="text-center">
                         <Badge 
-                          variant={prediction.fraud_score >= 80 ? "destructive" : prediction.fraud_score >= 60 ? "default" : "secondary"}
+                          variant={prediction.fraud_score >= 75 ? "destructive" : prediction.fraud_score >= 51 ? "default" : "secondary"}
                         >
                           {prediction.fraud_score}%
                         </Badge>
