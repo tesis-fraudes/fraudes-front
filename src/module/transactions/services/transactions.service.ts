@@ -422,6 +422,7 @@ export async function getCustomerLastMovements(
       amount: item.amount || 0,
       date: item.createdAt || item.timestamp || new Date().toISOString(),
       merchant: `Business ${item.businessId}`,
+      business: { tradeName: item.business.tradeName }
     }));
 
     return {
