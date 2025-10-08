@@ -376,6 +376,9 @@ export interface CustomerLastMovements {
   }>;
   average_spend: number;
   total_transactions: number;
+  business?: object & {
+    tradeName?: string;
+  };
 }
 
 export interface CustomerFraudHistory {
