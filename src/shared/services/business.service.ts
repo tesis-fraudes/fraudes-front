@@ -5,6 +5,7 @@ export interface Business {
   id: number;
   name: string;
   description?: string;
+  tradeName: string;
 }
 
 /**
@@ -30,6 +31,7 @@ export async function getBusinessList(): Promise<Business[]> {
         id: item.id,
         name: item.name || `Business ${item.id}`,
         description: item.description,
+        tradeName: item.tradeName,
       }));
     }
 
