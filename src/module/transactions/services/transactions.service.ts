@@ -31,6 +31,9 @@ function mapApiTransactionToSuspiciousTransaction(
     deviceInfo: `${item.deviceType} - ${item.browser}`,
     ipAddress: item.ipAddress,
     fraud_event_id: item?.fraud_event_id || "",
+    business: {
+      tradeName: item.business.tradeName,
+    }
   };
 }
 
@@ -50,7 +53,7 @@ export interface SuspiciousTransaction {
   ipAddress: string;
   fraud_event_id?: string;
   business: object & {
-    tradeName?: string;
+    tradeName: string;
   };
 }
 
@@ -373,12 +376,13 @@ export interface CustomerLastMovements {
     amount: number;
     date: string;
     merchant: string;
+    business: object & {
+      tradeName: string;
+    };
   }>;
   average_spend: number;
   total_transactions: number;
-  business?: object & {
-    tradeName?: string;
-  };
+  
 }
 
 export interface CustomerFraudHistory {
