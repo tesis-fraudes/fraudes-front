@@ -132,7 +132,7 @@ export default function ContentTransactionsPage() {
                 <SelectContent>
                   {businesses.map((business, idx) => (
                     <SelectItem key={`business_selector_${business.id}_${idx}`} value={business.id.toString()}>
-                      {business.name}
+                      {business.tradeName}
                       {user?.businessId === business.id && " (Tu negocio)"}
                     </SelectItem>
                   ))}
