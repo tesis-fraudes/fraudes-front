@@ -110,13 +110,13 @@ export default function ContentAutomaticTransactionsReportPage() {
       const score = transaction.score;
       switch (scoreFilter) {
         case "low":
-          matchesScore = score < 30;
+          matchesScore = score <= 50;
           break;
         case "medium":
-          matchesScore = score >= 30 && score < 70;
+          matchesScore = score > 50 && score < 75;
           break;
         case "high":
-          matchesScore = score >= 70;
+          matchesScore = score >= 75;
           break;
       }
     }
@@ -155,9 +155,9 @@ export default function ContentAutomaticTransactionsReportPage() {
   };
 
   const getScoreBadge = (score: number) => {
-    if (score < 30) {
+    if (score <= 50) {
       return <Badge className="bg-green-100 text-green-800">Bajo ({score})</Badge>;
-    } else if (score < 70) {
+    } else if (score < 75) {
       return <Badge className="bg-yellow-100 text-yellow-800">Medio ({score})</Badge>;
     } else {
       return <Badge className="bg-red-100 text-red-800">Alto ({score})</Badge>;

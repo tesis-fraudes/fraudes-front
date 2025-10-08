@@ -86,9 +86,9 @@ export default function ContentApprovedTransactionsReportPage() {
   };
 
   const getRiskBadge = (score: number) => {
-    if (score < 30) {
+    if (score <= 50) {
       return <Badge className="bg-green-100 text-green-800">Bajo ({score})</Badge>;
-    } else if (score < 70) {
+    } else if (score < 75) {
       return <Badge className="bg-yellow-100 text-yellow-800">Medio ({score})</Badge>;
     } else {
       return <Badge className="bg-red-100 text-red-800">Alto ({score})</Badge>;
