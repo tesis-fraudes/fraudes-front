@@ -251,7 +251,7 @@ export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { o
                             </SelectItem>
                             {businesses.map((business, idx) => (
                               <SelectItem key={`business_${business.id}_${idx}`} value={business.id.toString()}>
-                                {business.name}
+                                {business.tradeName}
                               </SelectItem>
                             ))}
                           </SelectContent>

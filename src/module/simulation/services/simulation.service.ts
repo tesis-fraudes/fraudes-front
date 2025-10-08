@@ -90,6 +90,7 @@ export interface Business {
   name: string;
   country: string;
   status: string;
+  tradeName: string;
 }
 
 export interface Customer {
@@ -129,6 +130,7 @@ export async function getBusinesses(): Promise<Business[]> {
       name: item.companyName || `Business ${item.id}`,
       country: item.country || item.countryCode || "",
       status: item.status === 1 ? "active" : "inactive",
+      tradeName: item.tradeName,
     }));
   } catch (error) {
     logApiError("Error al obtener negocios", error);
