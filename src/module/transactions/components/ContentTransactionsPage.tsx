@@ -4,20 +4,25 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AlertTriangle, RefreshCw, Building2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { AlertTriangle, RefreshCw, Building2, User, Hash } from "lucide-react";
 import { useTransactions } from "../hooks/useTransactions";
 import { useAuth } from "../../guard/hooks/useAuth";
 import TransactionCard from "./TransactionCard";
 import ApprovalModal from "./ApprovalModal";
 import { TransactionDetailsModal } from "./TransactionDetailsModal";
 import type { SuspiciousTransaction } from "../services";
-import { getBusinessList, type Business } from "@/shared/services";
+import { getBusinessList, type Business, getCustomerList, type Customer } from "@/shared/services";
 
 export default function ContentTransactionsPage() {
   const { user } = useAuth();
   const [businesses, setBusinesses] = useState<Business[]>([]);
-  const [selectedBusinessId, setSelectedBusinessId] = useState<number>(user?.businessId || 1);
+  const [customers, setCustomers] = useState<Customer[]>([]);
+  const [selectedBusinessId, setSelectedBusinessId] = useState<number>(0);
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number>(0);
+  const [transactionIdFilter, setTransactionIdFilter] = useState<string>("");
   const [isLoadingBusinesses, setIsLoadingBusinesses] = useState(true);
+  const [isLoadingCustomers, setIsLoadingCustomers] = useState(true);
 
   // Cargar lista de negocios al montar el componente
   useEffect(() => {
@@ -30,9 +35,6 @@ export default function ContentTransactionsPage() {
         // Si el usuario tiene un businessId, usarlo por defecto
         if (user?.businessId && businessList.some(b => b.id === user.businessId)) {
           setSelectedBusinessId(user.businessId);
-        } else if (businessList.length > 0) {
-          // Si no hay businessId del usuario, usar el primero de la lista
-          setSelectedBusinessId(businessList[0].id);
         }
       } catch (error) {
         console.error("Error al cargar negocios:", error);
@@ -44,7 +46,26 @@ export default function ContentTransactionsPage() {
     loadBusinesses();
   }, [user?.businessId]);
 
+  // Cargar lista de clientes al montar el componente
+  useEffect(() => {
+    const loadCustomers = async () => {
+      try {
+        setIsLoadingCustomers(true);
+        const customerList = await getCustomerList();
+        setCustomers(customerList);
+      } catch (error) {
+        console.error("Error al cargar clientes:", error);
+      } finally {
+        setIsLoadingCustomers(false);
+      }
+    };
+
+    loadCustomers();
+  }, []);
+
   const businessId = selectedBusinessId;
+  const customerId = selectedCustomerId;
+  const transactionId = transactionIdFilter ? Number(transactionIdFilter) : 0;
 
   const {
     transactions,
@@ -61,7 +82,7 @@ export default function ContentTransactionsPage() {
     handleViewDetails,
     closeDetailsModal,
     refreshData,
-  } = useTransactions(businessId);
+  } = useTransactions(businessId, customerId, transactionId);
 
   // Estados para el modal de aprobación/rechazo
   const [approvalTransaction, setApprovalTransaction] = useState<SuspiciousTransaction | null>(null);
@@ -115,34 +136,77 @@ export default function ContentTransactionsPage() {
           <div className="flex-1">
             <h1 className="text-3xl font-bold text-gray-900">Revisión Manual de transacciones sospechosas</h1>
 
-            {/* Selector de Negocio */}
-            <div className="flex items-center gap-3 mt-3">
+            {/* Filtros */}
+            <div className="flex flex-wrap items-center gap-4 mt-4">
+              {/* Selector de Negocio */}
               <div className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-gray-500" />
-                <span className="text-sm font-medium text-gray-700">Comercio :</span>
+                <span className="text-sm font-medium text-gray-700">Comercio:</span>
+                <Select
+                  value={selectedBusinessId.toString()}
+                  onValueChange={(value) => setSelectedBusinessId(Number(value))}
+                  disabled={isLoadingBusinesses}
+                >
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Todos</SelectItem>
+                    {businesses.map((business, idx) => (
+                      <SelectItem key={`business_selector_${business.id}_${idx}`} value={business.id.toString()}>
+                        {business.tradeName}
+                        {user?.businessId === business.id && " (Tu negocio)"}
+                      </SelectItem>
+                    ))}
+                    {businesses.length === 0 && !isLoadingBusinesses && (
+                      <SelectItem key="no-business" value="999" disabled>
+                        No hay negocios disponibles
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
               </div>
-              <Select
-                value={selectedBusinessId.toString()}
-                onValueChange={(value) => setSelectedBusinessId(Number(value))}
-                disabled={isLoadingBusinesses}
-              >
-                <SelectTrigger className="w-[280px]">
-                  <SelectValue placeholder="Seleccione un comercio" />
-                </SelectTrigger>
-                <SelectContent>
-                  {businesses.map((business, idx) => (
-                    <SelectItem key={`business_selector_${business.id}_${idx}`} value={business.id.toString()}>
-                      {business.tradeName}
-                      {user?.businessId === business.id && " (Tu negocio)"}
-                    </SelectItem>
-                  ))}
-                  {businesses.length === 0 && !isLoadingBusinesses && (
-                    <SelectItem key="no-business" value="999" disabled>
-                      No hay negocios disponibles
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+
+              {/* Selector de Cliente */}
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">Cliente:</span>
+                <Select
+                  value={selectedCustomerId.toString()}
+                  onValueChange={(value) => setSelectedCustomerId(Number(value))}
+                  disabled={isLoadingCustomers}
+                >
+                  <SelectTrigger className="w-[280px]">
+                    <SelectValue placeholder="Todos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="0">Todos</SelectItem>
+                    {customers.map((customer, idx) => (
+                      <SelectItem key={`customer_selector_${customer.id}_${idx}`} value={customer.id.toString()}>
+                        {customer.name}
+                      </SelectItem>
+                    ))}
+                    {customers.length === 0 && !isLoadingCustomers && (
+                      <SelectItem key="no-customer" value="999" disabled>
+                        No hay clientes disponibles
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Input de Transaction ID */}
+              <div className="flex items-center gap-2">
+                <Hash className="h-4 w-4 text-gray-500" />
+                <span className="text-sm font-medium text-gray-700">ID Transacción:</span>
+                <Input
+                  type="number"
+                  placeholder="Ingrese ID"
+                  value={transactionIdFilter}
+                  onChange={(e) => setTransactionIdFilter(e.target.value)}
+                  className="w-[180px]"
+                />
+              </div>
             </div>
           </div>
           <Button

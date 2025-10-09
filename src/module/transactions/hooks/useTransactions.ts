@@ -43,7 +43,11 @@ interface UseTransactionsReturn {
   refreshData: () => Promise<void>;
 }
 
-export function useTransactions(businessId: number = 1): UseTransactionsReturn {
+export function useTransactions(
+  businessId: number = 0,
+  customerId: number = 0,
+  transactionId: number = 0
+): UseTransactionsReturn {
   // Estados de datos
   const [transactions, setTransactions] = useState<SuspiciousTransaction[]>([]);
 
@@ -73,7 +77,12 @@ export function useTransactions(businessId: number = 1): UseTransactionsReturn {
         limit: 10,
       };
 
-      const response = await getSuspiciousTransactions(businessId, searchParams);
+      const response = await getSuspiciousTransactions(
+        businessId || 0,
+        searchParams,
+        customerId || 0,
+        transactionId || 0
+      );
       
       console.log("response =======>", response);
       setTransactions(response.transactions);
@@ -85,7 +94,7 @@ export function useTransactions(businessId: number = 1): UseTransactionsReturn {
     } finally {
       setIsLoading(false);
     }
-  }, [businessId, searchQuery, filters, currentPage]);
+  }, [businessId, customerId, transactionId, searchQuery, filters, currentPage]);
 
 
   // Aprobar transacción

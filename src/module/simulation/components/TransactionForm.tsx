@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/shared/ui/accordion";
 import { useSimulationStore } from "../store/simulation.store";
+import { useAuth } from "../../guard/hooks/useAuth";
 import {
   getBusinesses,
   getCustomers,
@@ -56,6 +57,7 @@ const COUNTRIES = [
 
 export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { onSimulate: SubmitHandler<TransactionFormValues>; onChangeValues?: (values: TransactionFormValues) => void; shouldReset?: boolean }) {
   const { form: initialForm } = useSimulationStore();
+  const { user } = useAuth();
 
   // Estados para opciones de los combos
   const [businesses, setBusinesses] = useState<Business[]>([]);
@@ -71,7 +73,7 @@ export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { o
     resolver: zodResolver(schema as any) as any,
     defaultValues: {
       ...initialForm,
-      user_id: undefined, // No tomar user_id del store, debe ser independiente
+      user_id: user?.id ? Number(user.id) : 0,
     } as unknown as TransactionFormValues,
     mode: "onBlur",
   });
@@ -109,6 +111,13 @@ export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { o
     loadOptions();
   }, []);
 
+  // Establecer el user_id del usuario de la sesión
+  useEffect(() => {
+    if (user?.id) {
+      setValue("user_id", Number(user.id));
+    }
+  }, [user, setValue]);
+
   // Cargar métodos de pago cuando cambia el cliente seleccionado
   useEffect(() => {
     const loadPaymentMethods = async () => {
@@ -121,17 +130,12 @@ export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { o
           if (methods.length > 0 && !values.payment_id) {
             setValue("payment_id", methods[0].id);
           }
-
-          // Asignar el ID del cliente seleccionado al campo user_id
-          setValue("user_id", selectedCustomerId);
         } catch (error) {
           console.error("Error al cargar métodos de pago:", error);
           setPaymentMethods([]);
         }
       } else {
         setPaymentMethods([]);
-        // Limpiar user_id si no hay cliente seleccionado
-        setValue("user_id", 0);
       }
     };
 
@@ -325,7 +329,7 @@ export function TransactionForm({ onSimulate, onChangeValues, shouldReset }: { o
 
                   {/* User ID */}
                   <div className="space-y-1">
-                    <Label className="text-sm text-gray-600">Usuario ID *</Label>
+                    <Label className="text-sm text-gray-600">Usuario del Sistema (ID) *</Label>
                     <Input type="number" readOnly className="bg-gray-50 cursor-not-allowed" {...register("user_id")} />
                     {errors.user_id && <p className="text-xs text-red-600">{String(errors.user_id?.message)}</p>}
                   </div>

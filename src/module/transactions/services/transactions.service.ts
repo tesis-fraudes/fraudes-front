@@ -33,7 +33,7 @@ function mapApiTransactionToSuspiciousTransaction(
     fraud_event_id: item?.fraud_event_id || "",
     business: {
       tradeName: item.business.tradeName,
-    }
+    },
   };
 }
 
@@ -86,12 +86,53 @@ export interface TransactionSearchResponse {
 }
 
 export async function getSuspiciousTransactions(
-  businessId: number = 1,
-  params: TransactionSearchParams = {}
+  businessId: number = 0,
+  params: TransactionSearchParams = {},
+  customerId: number = 0,
+  transactionId: number = 0
 ): Promise<TransactionSearchResponse> {
   try {
+    // Si se proporcionan filtros de búsqueda, usar el endpoint de search
+    if (businessId !== 0 || customerId !== 0 || transactionId !== 0) {
+      const response = await apiService.post(
+        `${ENV.API_URL_TRANSACTIONS}/transaction/suspicious/search`,
+        {
+          business_id: businessId,
+          customer_id: customerId,
+          transaction_id: transactionId,
+        },
+        {
+          headers: {
+            accept: "*/*",
+          },
+        }
+      );
+
+      // La API devuelve el array directamente en response
+      const data = Array.isArray(response)
+        ? response
+        : (response.data as any) || [];
+
+      // Si la respuesta es un array directo, adaptarlo
+      if (Array.isArray(data)) {
+        // Mapear los datos de la API real al formato esperado
+        const mappedTransactions = data.map(
+          mapApiTransactionToSuspiciousTransaction
+        );
+
+        return {
+          transactions: mappedTransactions,
+          total: data.length,
+          page: params.page || 1,
+          limit: params.limit || 10,
+          totalPages: Math.ceil(data.length / (params.limit || 10)),
+        };
+      }
+    }
+
+    // Si no hay filtros de búsqueda, usar el endpoint original
     const response = await apiService.get(
-      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId}/suspicious`,
+      `${ENV.API_URL_TRANSACTIONS}/transaction/${businessId || 1}/suspicious`,
       {
         params,
         headers: {
@@ -101,7 +142,9 @@ export async function getSuspiciousTransactions(
     );
 
     // La API devuelve el array directamente en response, no en response.data
-    const data = Array.isArray(response) ? response : (response.data as any) || {};
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || {};
 
     // Si la respuesta es un array directo, adaptarlo
     if (Array.isArray(data)) {
@@ -160,8 +203,10 @@ export async function getTransactionById(
     );
 
     // La API devuelve el array directamente en response
-    const data = Array.isArray(response) ? response : (response.data as any) || {};
-    
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || {};
+
     if (Array.isArray(data)) {
       // Buscar la transacción por ID
       const transaction = data.find((item: any) => item.id.toString() === id);
@@ -188,7 +233,7 @@ export async function approveTransaction(
         action: "approve",
         observation: data.observation,
         result: data.result,
-        consequences: data.consequences
+        consequences: data.consequences,
       },
       {
         headers: {
@@ -214,7 +259,7 @@ export async function rejectTransaction(
         action: "reject",
         observation: data.observation,
         result: data.result,
-        consequences: data.consequences
+        consequences: data.consequences,
       },
       {
         headers: {
@@ -229,7 +274,11 @@ export async function rejectTransaction(
   }
 }
 
-export async function getTransactionStatisticsSearch(businessId: number = 0, customerId = 0, transactionId = 0): Promise<{
+export async function getTransactionStatisticsSearch(
+  businessId: number = 0,
+  customerId = 0,
+  transactionId = 0
+): Promise<{
   total: number;
   pending: number;
   approved: number;
@@ -256,7 +305,9 @@ export async function getTransactionStatisticsSearch(businessId: number = 0, cus
     );
 
     // La API devuelve el array directamente en response, no en response.data
-    const data = Array.isArray(response) ? response : (response.data as any) || {};
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || {};
 
     // Asegurar que transactions sea un array y mapear los datos
     let transactions = [];
@@ -301,7 +352,9 @@ export async function getTransactionStatisticsSearch(businessId: number = 0, cus
   }
 }
 
-export async function getTransactionStatistics(businessId: number = 1): Promise<{
+export async function getTransactionStatistics(
+  businessId: number = 1
+): Promise<{
   total: number;
   pending: number;
   approved: number;
@@ -323,7 +376,9 @@ export async function getTransactionStatistics(businessId: number = 1): Promise<
     );
 
     // La API devuelve el array directamente en response, no en response.data
-    const data = Array.isArray(response) ? response : (response.data as any) || {};
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || {};
 
     // Asegurar que transactions sea un array y mapear los datos
     let transactions = [];
@@ -382,7 +437,6 @@ export interface CustomerLastMovements {
   }>;
   average_spend: number;
   total_transactions: number;
-  
 }
 
 export interface CustomerFraudHistory {
@@ -413,7 +467,9 @@ export async function getCustomerLastMovements(
     );
 
     // La API devuelve { average_amount, items }
-    const data = Array.isArray(response) ? { items: response } : (response.data as any) || response || {};
+    const data = Array.isArray(response)
+      ? { items: response }
+      : (response.data as any) || response || {};
 
     // Mapear los items a nuestro formato esperado
     const items = data.items || [];
@@ -422,7 +478,7 @@ export async function getCustomerLastMovements(
       amount: item.amount || 0,
       date: item.createdAt || item.timestamp || new Date().toISOString(),
       merchant: `Business ${item.businessId}`,
-      business: { tradeName: item.business.tradeName }
+      business: { tradeName: item.business.tradeName },
     }));
 
     return {
@@ -459,7 +515,9 @@ export async function getCustomerFraudHistory(
     );
 
     // La API devuelve un array directo de transacciones fraudulentas
-    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || [];
     const fraudTransactions = Array.isArray(data) ? data : [];
 
     // Mapear las transacciones al formato esperado
@@ -467,18 +525,20 @@ export async function getCustomerFraudHistory(
       id: item.id?.toString() || "",
       amount: item.amount || 0,
       date: item.createdAt || item.timestamp || new Date().toISOString(),
-      fraud_type: item.fraudScore >= 75 
-        ? "Alto Riesgo" 
-        : item.fraudScore >= 50 
-        ? "Riesgo Medio" 
-        : "Bajo Riesgo",
-      status: item.status === 5 
-        ? "Fraude Confirmado" 
-        : item.status === 3 
-        ? "Pendiente" 
-        : item.status === 1 
-        ? "Aprobada" 
-        : "Rechazada",
+      fraud_type:
+        item.fraudScore >= 75
+          ? "Alto Riesgo"
+          : item.fraudScore >= 50
+          ? "Riesgo Medio"
+          : "Bajo Riesgo",
+      status:
+        item.status === 5
+          ? "Fraude Confirmado"
+          : item.status === 3
+          ? "Pendiente"
+          : item.status === 1
+          ? "Aprobada"
+          : "Rechazada",
     }));
 
     // Encontrar la fecha del último fraude
@@ -490,7 +550,8 @@ export async function getCustomerFraudHistory(
         const dateB = new Date(b.createdAt || b.timestamp).getTime();
         return dateB - dateA;
       });
-      lastFraudDate = sortedFrauds[0].createdAt || sortedFrauds[0].timestamp || "";
+      lastFraudDate =
+        sortedFrauds[0].createdAt || sortedFrauds[0].timestamp || "";
     }
 
     return {
@@ -534,7 +595,9 @@ export async function getCustomerActivePaymentMethods(
     );
 
     // La API devuelve un array directo
-    const data = Array.isArray(response) ? response : (response.data as any) || [];
+    const data = Array.isArray(response)
+      ? response
+      : (response.data as any) || [];
     const paymentMethods = Array.isArray(data) ? data : [];
 
     // Mapear al formato esperado por el componente
