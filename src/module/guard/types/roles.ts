@@ -47,6 +47,8 @@ export enum Permission {
 // Mapeo de roles a permisos
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   [UserRole.ANALISTA]: [
+    // Acceso al dashboard
+    Permission.DASHBOARD_VIEW,
     // Acceso al mantenimiento de modelos
     Permission.MODEL_VIEW,
     Permission.MODEL_CREATE,
@@ -62,6 +64,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   ],
 
   [UserRole.GERENTE]: [
+    // Acceso al dashboard
+    Permission.DASHBOARD_VIEW,
     // Solo acceso a reportes y paneles de resultados
     Permission.REPORTS_VIEW,
     Permission.REPORTS_PREDICTIONS,

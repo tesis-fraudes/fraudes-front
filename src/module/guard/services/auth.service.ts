@@ -1,20 +1,21 @@
+import { ENV } from "@/shared/const/env";
 import { type ApiResponse, apiService } from "@/shared/services/api.service";
 import { ROLE_PERMISSIONS, UserRole } from "../types/roles";
 import type {
   LoginRequest,
+  LoginRequestReal,
   LoginResponse,
+  LoginResponseReal,
   RegisterRequest,
   RegisterResponse,
-  VerifyTokenResponse,
   Role,
   UserData,
-  LoginRequestReal,
-  LoginResponseReal,
+  VerifyTokenResponse,
 } from "./types";
 
 class AuthService {
   private isMock = false; // Cambiar a false para usar endpoints reales
-  private baseUrl = "https://fd6bat803l.execute-api.us-east-1.amazonaws.com";
+  private baseUrl = ENV.API_URL_TRANSACTIONS;
 
   // Simulación de API - reemplazar con llamadas reales
   private mockApi = {

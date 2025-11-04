@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { ENV } from "@/shared/const/env";
 import type { HttpMethod, PurchaseTransactionPayload } from "../types";
 
 interface SimulationState {
@@ -59,7 +60,7 @@ const defaultForm: PurchaseTransactionPayload = {
 
 export const useSimulationStore = create<SimulationState>((set) => ({
   endpointUrl:
-    "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/transaction/purchase",
+    `${ENV.API_URL_TRANSACTIONS}/transaction/purchase`,
   httpMethod: "POST",
   headersJson: defaultHeaders,
   modelName: "",

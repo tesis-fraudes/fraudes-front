@@ -1,4 +1,4 @@
-import { Brain, BarChart3, CreditCard } from "lucide-react";
+import { BarChart3, Brain, CreditCard } from "lucide-react";
 import { Permission } from "@/module/guard/types/roles";
 
 export interface SubMenuItem {
@@ -54,6 +54,12 @@ export const menuData: MenuSection[] = [
         icon: BarChart3,
         requiredPermission: Permission.REPORTS_VIEW,
         children: [
+          {
+            id: "reports-overview",
+            label: "Overview",
+            href: "/reports/overview",
+            requiredPermission: Permission.DASHBOARD_VIEW
+          },
           {
             id: "reports-predictions",
             label: "Predicciones realizadas",

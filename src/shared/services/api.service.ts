@@ -19,7 +19,7 @@ class ApiService {
 
   constructor() {
     this.axiosInstance = axios.create({
-      baseURL: ENV.API_URL,
+      baseURL: ENV.API_URL_TRANSACTIONS,
       timeout: 10000,
       headers: {
         "Content-Type": "application/json",

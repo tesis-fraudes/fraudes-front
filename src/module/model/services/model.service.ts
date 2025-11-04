@@ -1,4 +1,5 @@
 // MÓDULO: TRANSACCIÓN (Predicciones y compras)
+import { ENV } from "@/shared/const/env";
 import { apiService } from "@/shared/services";
 import { adaptModelsApiResponse } from "../adapters/model.adapter";
 
@@ -153,7 +154,7 @@ export interface TransactionPredictionResponse {
 export async function predictTransaction(payload: TransactionPredictionPayload): Promise<TransactionPredictionResponse> {
   try {
     const response = await apiService.post(
-      "https://fd6bat803l.execute-api.us-east-1.amazonaws.com/transaction/purchase",
+      `${ENV.API_URL_TRANSACTIONS}/transaction/purchase`,
       payload,
       {
         headers: {

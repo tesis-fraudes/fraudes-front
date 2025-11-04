@@ -1,4 +1,5 @@
 // MÓDULO: SIMULADOR DE COMPRA (Combos y selección)
+import { ENV } from "@/shared/const/env";
 import { apiService } from "@/shared/services";
 import type { ApiError } from "@/shared/services/api.service";
 
@@ -40,34 +41,30 @@ export async function simulateTransaction(
   config: SimulationConfig,
   payload: PurchaseTransactionPayload
 ): Promise<SimulationResponse> {
-  try {
-    const method = (config.httpMethod || "POST").toUpperCase();
-    const url = config.endpointUrl;
-    const headers = config.headers;
-    let response: any;
+  const method = (config.httpMethod || "POST").toUpperCase();
+  const url = config.endpointUrl;
+  const headers = config.headers;
+  let response: any;
 
-    if (method === "GET") {
-      response = await apiService.get(url, { headers });
-    } else if (method === "PUT") {
-      response = await apiService.put(url, payload, { headers });
-    } else if (method === "PATCH") {
-      response = await apiService.patch(url, payload, { headers });
-    } else if (method === "DELETE") {
-      response = await apiService.delete(url, { headers });
-    } else {
-      // Default POST
-      response = await apiService.post(url, payload, { headers });
-    }
-
-    return {
-      prediction: response.data.prediction || 0,
-      risk_score: response.data.risk_score || 0,
-      recommendation: response.data.recommendation || "Revisar manualmente",
-      timestamp: new Date().toISOString(),
-    };
-  } catch (error) {
-    throw error;
+  if (method === "GET") {
+    response = await apiService.get(url, { headers });
+  } else if (method === "PUT") {
+    response = await apiService.put(url, payload, { headers });
+  } else if (method === "PATCH") {
+    response = await apiService.patch(url, payload, { headers });
+  } else if (method === "DELETE") {
+    response = await apiService.delete(url, { headers });
+  } else {
+    // Default POST
+    response = await apiService.post(url, payload, { headers });
   }
+
+  return {
+    prediction: response.data.prediction || 0,
+    risk_score: response.data.risk_score || 0,
+    recommendation: response.data.recommendation || "Revisar manualmente",
+    timestamp: new Date().toISOString(),
+  };
 }
 
 export async function getSimulationModels(): Promise<Array<{ id: string; name: string; status: string }>> {
@@ -116,7 +113,7 @@ export interface ConfigParameter {
 
 export async function getBusinesses(): Promise<Business[]> {
   try {
-    const response = await apiService.get("https://fd6bat803l.execute-api.us-east-1.amazonaws.com/business", {
+    const response = await apiService.get(`${ENV.API_URL_TRANSACTIONS}/business`, {
       headers: {
         accept: "*/*",
       },
@@ -140,7 +137,7 @@ export async function getBusinesses(): Promise<Business[]> {
 
 export async function getCustomers(): Promise<Customer[]> {
   try {
-    const response = await apiService.get("https://fd6bat803l.execute-api.us-east-1.amazonaws.com/customers", {
+    const response = await apiService.get(`${ENV.API_URL_TRANSACTIONS}/customers`, {
       headers: {
         accept: "*/*",
       },
@@ -164,7 +161,7 @@ export async function getCustomers(): Promise<Customer[]> {
 export async function getCustomerActivePaymentMethods(customerId: number): Promise<PaymentMethod[]> {
   try {
     const response = await apiService.get(
-      `https://fd6bat803l.execute-api.us-east-1.amazonaws.com/customers/${customerId}/payment_methods/active`,
+      `${ENV.API_URL_TRANSACTIONS}/customers/${customerId}/payment_methods/active`,
       {
         headers: {
           accept: "*/*",
@@ -195,7 +192,7 @@ export async function getCustomerActivePaymentMethods(customerId: number): Promi
 export async function getConfigParameters(parameterType: string): Promise<ConfigParameter[]> {
   try {
     const response = await apiService.get(
-      `https://fd6bat803l.execute-api.us-east-1.amazonaws.com/configs/parameters/${parameterType}`,
+      `${ENV.API_URL_TRANSACTIONS}/configs/parameters/${parameterType}`,
       {
         headers: {
           accept: "*/*",
