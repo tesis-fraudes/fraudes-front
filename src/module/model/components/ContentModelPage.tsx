@@ -81,7 +81,7 @@ export function ContentModelPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Modelo de IA</h1>
           <h2 className="text-3xl font-bold tracking-tight">
-            PK1 - Evaluación Automática de Transacciones
+            Evaluación Automática de Transacciones
           </h2>
         </div>
         <div className="flex gap-2">
