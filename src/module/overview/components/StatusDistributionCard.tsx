@@ -6,7 +6,7 @@ import {
     ChartTooltip,
     ChartTooltipContent,
 } from "@/shared/ui/chart";
-import { Bar, BarChart, Cell, XAxis, YAxis } from "recharts";
+import { Cell, Pie, PieChart } from "recharts";
 
 interface StatusDistributionChartProps {
     data: Array<{ status: string; count: number }>;
@@ -14,12 +14,12 @@ interface StatusDistributionChartProps {
 }
 
 const COLORS = [
-    "hsl(221, 83%, 53%)",
-    "hsl(142, 76%, 36%)",
-    "hsl(0, 84%, 60%)",
-    "hsl(271, 81%, 56%)",
-    "hsl(23, 96%, 53%)",
-    "hsl(200, 98%, 39%)",
+    "hsl(221, 100%, 86%)", // azul pastel
+    "hsl(142, 72%, 82%)",  // verde pastel
+    "hsl(353, 82%, 86%)",  // rojo pastel
+    "hsl(271, 74%, 88%)",  // morado pastel
+    "hsl(32, 100%, 85%)",  // naranja pastel
+    "hsl(199, 85%, 84%)",  // celeste pastel
 ];
 
 export function StatusDistributionChart({ data, total }: StatusDistributionChartProps) {
@@ -81,29 +81,29 @@ export function StatusDistributionChart({ data, total }: StatusDistributionChart
                             <ChartContainer
                                 id="status-distribution"
                                 config={config}
-                                className="h-[300px] sm:h-[360px] lg:h-[420px] max-w-full rounded-xl bg-muted/10 px-4 py-6"
+                                className="max-w-full rounded-xl bg-white px-4 py-6 shadow-sm ring-1 ring-muted/40"
                             >
-                                <BarChart data={chartData} barCategoryGap="20%">
-                                    <XAxis
-                                        dataKey="status"
-                                        tickLine={false}
-                                        axisLine={false}
-                                        height={60}
-                                        tickFormatter={(value: string) =>
-                                            value.length > 16 ? `${value.slice(0, 16)}…` : value
-                                        }
-                                        interval={0}
-                                        angle={chartData.length > 4 ? -20 : 0}
-                                        textAnchor={chartData.length > 4 ? "end" : "middle"}
-                                    />
-                                    <YAxis
-                                        allowDecimals={false}
-                                        tickLine={false}
-                                        axisLine={false}
-                                        width={48}
-                                    />
+                                <PieChart>
+                                    <Pie
+                                        data={chartData}
+                                        dataKey="count"
+                                        nameKey="status"
+                                        innerRadius="50%"
+                                        outerRadius="72%"
+                                        cornerRadius={12}
+                                        paddingAngle={chartData.length > 1 ? 2 : 0}
+                                    >
+                                        {chartData.map((entry) => (
+                                            <Cell
+                                                key={entry.status}
+                                                fill={entry.color}
+                                                stroke="rgba(255,255,255,0.8)"
+                                                strokeWidth={1.5}
+                                            />
+                                        ))}
+                                    </Pie>
                                     <ChartTooltip
-                                        cursor={{ fill: "hsl(var(--accent) / 0.35)" }}
+                                        cursor={false}
                                         content={
                                             <ChartTooltipContent
                                                 nameKey="status"
@@ -119,6 +119,7 @@ export function StatusDistributionChart({ data, total }: StatusDistributionChart
                                         }
                                     />
                                     <ChartLegend
+                                        verticalAlign="bottom"
                                         wrapperStyle={{ paddingTop: 16 }}
                                         content={
                                             <ChartLegendContent
@@ -127,12 +128,7 @@ export function StatusDistributionChart({ data, total }: StatusDistributionChart
                                             />
                                         }
                                     />
-                                    <Bar dataKey="count" radius={[10, 10, 4, 4]} maxBarSize={56}>
-                                        {chartData.map((entry) => (
-                                            <Cell key={entry.status} fill={entry.color} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
+                                </PieChart>
                             </ChartContainer>
                         </div>
                     </>

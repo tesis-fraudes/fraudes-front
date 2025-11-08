@@ -29,8 +29,8 @@ export async function getBusinessList(): Promise<Business[]> {
     if (Array.isArray(data)) {
       return data.map((item: any) => ({
         id: item.id,
-        name: item.name || `Business ${item.id}`,
-        description: item.description,
+        name: item.tradeName || `Business ${item.id}`,
+        description: item.companyName,
         tradeName: item.tradeName,
       }));
     }
