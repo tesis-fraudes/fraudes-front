@@ -5,16 +5,10 @@ import { Download } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/shared/ui/button";
 import { OverviewFiltersComponent } from "./OverviewFilters";
-import {
-    TransactionsByDayChart,
-    TransactionsDistributionChart,
-    FraudsByTypeChart,
-    FraudsByRegionChart,
-    PredictionsTrendChart,
-} from "./charts";
 import { MetricsCards } from "./MetricsCards";
 import { useOverviewStore } from "../store/overview.store";
 import { exportOverviewToPdf } from "../utils/exportToPdf";
+import { StatusDistributionChart } from "./StatusDistributionCard";
 
 export default function ContentOverviewPage() {
     const {
@@ -117,22 +111,12 @@ export default function ContentOverviewPage() {
                     {/* Métricas principales */}
                     <MetricsCards metrics={data.metrics} />
 
-                    {/* Sección de gráficos para PDF */}
-                    <div id="overview-charts" className="space-y-6">
-                        {/* Gráficos principales */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <TransactionsByDayChart data={data.transactionsByDay} />
-                            <TransactionsDistributionChart data={data.transactionsByStatus} />
-                        </div>
-
-                        {/* Gráficos adicionales de fraudes */}
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <FraudsByTypeChart data={data.fraudsByType} />
-                            <FraudsByRegionChart data={data.fraudsByRegion} />
-                        </div>
-
-                        {/* Gráfico de tendencia de predicciones */}
-                        <PredictionsTrendChart data={data.predictionsTrend} />
+                    {/* Distribución por estado */}
+                    <div id="overview-charts">
+                        <StatusDistributionChart
+                            data={data.transactionsByStatus}
+                            total={data.metrics.totalTransactions}
+                        />
                     </div>
                 </>
             )}
