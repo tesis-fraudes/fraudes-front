@@ -216,20 +216,35 @@ export function ContentModelPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Precisión del Modelo</label>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${activeModel.accuracy || 0}%` }}
-                  />
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Precisión del Modelo</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${activeModel.accuracy || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium">{activeModel.accuracy?.toFixed(1)}%</span>
                 </div>
-                <span className="text-sm font-medium">{activeModel.accuracy?.toFixed(1)}%</span>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Recall</label>
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-green-600 h-2 rounded-full transition-all duration-300"
+                      style={{ width: `${activeModel.recall || 0}%` }}
+                    />
+                  </div>
+                  <span className="text-sm font-medium">{activeModel.recall?.toFixed(1)}%</span>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-blue-600">{activeModel.truePositives ?? 0}</div>
                 <div className="text-xs text-gray-500">Verdaderos Positivos</div>
@@ -239,8 +254,12 @@ export function ContentModelPage() {
                 <div className="text-xs text-gray-500">Falsos Positivos</div>
               </div>
               <div className="space-y-1">
-                <div className="text-2xl font-bold text-blue-600">{activeModel.falseNegatives ?? 0}</div>
+                <div className="text-2xl font-bold text-orange-600">{activeModel.falseNegatives ?? 0}</div>
                 <div className="text-xs text-gray-500">Falsos Negativos</div>
+              </div>
+              <div className="space-y-1">
+                <div className="text-2xl font-bold text-green-600">{activeModel.trueNegatives ?? 0}</div>
+                <div className="text-xs text-gray-500">Verdaderos Negativos</div>
               </div>
             </div>
 

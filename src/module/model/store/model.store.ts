@@ -11,6 +11,7 @@ export interface ModelData {
   fileSize: number;
   isActive: boolean;
   accuracy?: number;
+  recall?: number;
   status: "active" | "inactive" | "training" | "error";
   urlFile?: string;
   truePositives?: number;
@@ -90,6 +91,7 @@ export const useModelStore = create<ModelStore>((set, get) => ({
           fileSize: adaptedData.fileSize || 0,
           isActive: true,
           accuracy: typeof adaptedData.accuracy === "number" ? adaptedData.accuracy * 100 : undefined,
+          recall: typeof adaptedData.recall === "number" ? adaptedData.recall * 100 : undefined,
           status: "active",
           urlFile: adaptedData.urlFile,
           truePositives: typeof adaptedData.tp === "number" ? adaptedData.tp : undefined,

@@ -13,11 +13,9 @@ export function useRoles() {
         setIsLoading(true);
         setError(null);
         const rolesData = await authService.getRoles();
-        console.log("📋 Roles obtenidos del API:", rolesData);
         setRoles(rolesData);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Error al cargar roles");
-        console.error("Error al cargar roles:", err);
       } finally {
         setIsLoading(false);
       }

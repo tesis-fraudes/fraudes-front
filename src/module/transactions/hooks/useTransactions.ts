@@ -84,12 +84,10 @@ export function useTransactions(
         transactionId || 0
       );
       
-      console.log("response =======>", response);
       setTransactions(response.transactions);
       setTotalPages(response.totalPages);
       setTotalCount(response.total);
     } catch (error) {
-      console.error("Error al cargar transacciones:", error);
       toast.error("Error al cargar las transacciones");
     } finally {
       setIsLoading(false);

@@ -44,20 +44,15 @@ function SignInForm() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    console.log("📝 Formulario enviado:", data);
-    console.log("👤 Rol seleccionado:", role);
     setError("");
 
     try {
-      console.log("🚀 Llamando a login...");
       await login({
         email: data.email,
         password: data.password,
         role: role,
       });
-      console.log("✅ Login completado exitosamente");
     } catch (err) {
-      console.error("❌ Error en login:", err);
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     }
   };

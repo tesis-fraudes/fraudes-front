@@ -3,36 +3,26 @@ import { usePermissions } from "@/module/guard";
 import { menuData, type MenuItem, type SubMenuItem } from "../routes/menu.config";
 
 export function useFilteredMenu() {
-  const { hasPermission, user, role } = usePermissions();
+  const { hasPermission } = usePermissions();
 
   const filteredMenu = useMemo(() => {
-    console.log("🔍 Filtrando menú para usuario:", user?.name, "rol:", role);
     const filterMenuItems = (items: MenuItem[]): MenuItem[] => {
       return items
         .filter((item) => {
           // Si no tiene permiso requerido, filtrar el item
           if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
-            console.log("❌ Filtrando item:", item.label, "permiso requerido:", item.requiredPermission);
             return false;
           }
-
-          console.log("✅ Mostrando item:", item.label, "permiso:", item.requiredPermission);
 
           // Si tiene hijos, filtrar también los hijos
           if (item.children) {
             const filteredChildren = item.children.filter((child) => {
               const hasChildPermission = !child.requiredPermission || hasPermission(child.requiredPermission);
-              if (!hasChildPermission) {
-                console.log("❌ Filtrando subitem:", child.label, "permiso requerido:", child.requiredPermission);
-              } else {
-                console.log("✅ Mostrando subitem:", child.label, "permiso:", child.requiredPermission);
-              }
               return hasChildPermission;
             });
 
             // Si no quedan hijos válidos, filtrar el item padre también
             if (filteredChildren.length === 0) {
-              console.log("❌ Filtrando item padre (sin hijos válidos):", item.label);
               return false;
             }
 

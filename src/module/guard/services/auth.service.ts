@@ -155,8 +155,6 @@ class AuthService {
 
   async loginReal(credentials: LoginRequestReal): Promise<LoginResponseReal> {
     try {
-      console.log("🔐 Intentando login con credenciales:", credentials);
-      
       const response = await fetch(`${this.baseUrl}/auth/login`, {
         method: "POST",
         headers: {
@@ -225,12 +223,7 @@ class AuthService {
 
   // Métodos públicos
   async login(credentials: LoginRequest): Promise<LoginResponse> {
-    console.log("🚀 Iniciando proceso de login...");
-    console.log("🔧 isMock:", this.isMock);
-    console.log("📝 Credenciales recibidas:", credentials);
-    
     if (this.isMock) {
-      console.log("🎭 Usando API mock");
       return this.mockApi.login(credentials);
     }
 
@@ -241,8 +234,6 @@ class AuthService {
       password: credentials.password,
       role_id: roleId,
     };
-
-    console.log("🔄 Credenciales convertidas:", realCredentials);
 
     try {
       const response = await this.loginReal(realCredentials);
@@ -256,7 +247,6 @@ class AuthService {
 
       // Convertir respuesta real al formato esperado por la aplicación
       const userRole = this.getUserRoleFromRoleId(roleId);
-      console.log("👤 Rol mapeado:", userRole);
       
       const result = {
         user: {
@@ -269,10 +259,8 @@ class AuthService {
         token: response.token || `real-token-${Date.now()}`,
       };
       
-      console.log("🎉 Login exitoso, resultado final:", result);
       return result;
     } catch (error) {
-      console.error("💥 Error en login:", error);
       throw error;
     }
   }
