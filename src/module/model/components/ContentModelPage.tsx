@@ -247,7 +247,7 @@ export function ContentModelPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 text-center">
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-blue-600">{activeModel.truePositives ?? 0}</div>
-                <div className="text-xs text-gray-500">Verdaderos Positivos</div>
+                <div className="text-xs text-gray-500">Verdaderos Negativos</div>
               </div>
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-red-600">{activeModel.falsePositives ?? 0}</div>
@@ -259,7 +259,7 @@ export function ContentModelPage() {
               </div>
               <div className="space-y-1">
                 <div className="text-2xl font-bold text-green-600">{activeModel.trueNegatives ?? 0}</div>
-                <div className="text-xs text-gray-500">Verdaderos Negativos</div>
+                <div className="text-xs text-gray-500">Verdaderos Positivos</div>
               </div>
             </div>
 
